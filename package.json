@@ -1,0 +1,25 @@
+{
+  "name": "bun-ts-template",
+  "version": "0.0.0",
+  "description": "Minimal TypeScript starter template for Bun",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "test": "bun test",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "prepare": "lefthook install"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "latest",
+    "bun-types": "latest",
+    "lefthook": "latest",
+    "semantic-release": "latest",
+    "@semantic-release/changelog": "latest",
+    "@semantic-release/git": "latest",
+    "typescript": "latest"
+  }
+}

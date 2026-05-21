@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Uncomment when enabling semantic-release.
+# permissions:
+#   contents: write
+#   issues: write
+#   pull-requests: write
+
+jobs:
+  ci:
+    name: Check & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Uncomment when enabling semantic-release (requires Node >= 22).
+      # - name: Setup Node
+      #   uses: actions/setup-node@v4
+      #   with:
+      #     node-version: 22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Biome check
+        run: bunx biome check .
+
+      - name: Type check
+        run: bunx tsc --noEmit
+
+      - name: Test
+        run: bun test
+
+      - name: Build
+        run: bun run build
+
+      # Uncomment to enable automated releases via semantic-release.
+      # Requires Node >= 22 (setup-node step already included above).
+      # - name: Release
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   run: bunx semantic-release
