@@ -4,6 +4,17 @@
   "description": "Code-first agent tool definitions with Zod schemas",
   "license": "MIT",
   "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
@@ -14,7 +25,7 @@
     "prepare": "lefthook install"
   },
   "dependencies": {
-    "zod": "^3.25.1"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
