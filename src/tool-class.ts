@@ -15,7 +15,7 @@
  *
  * ```ts
  * import { z } from "zod";
- * import { Tool, l2Output } from "code-first-agents-tool";
+ * import { Tool, l2Output } from "@code-first-agents/tool";
  *
  * new Tool({ name: "level-classifier", description: "..." })
  *   .subcommand({
