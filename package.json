@@ -1,8 +1,8 @@
 {
-  "name": "bun-ts-template",
-  "version": "0.0.0",
-  "description": "Minimal TypeScript starter template for Bun",
-  "license": "Apache-2.0",
+  "name": "@code-first-agents/tool",
+  "version": "0.1.0",
+  "description": "Code-first agent tool definitions with Zod schemas",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
@@ -12,6 +12,9 @@
     "format": "biome format --write .",
     "check": "biome check --write .",
     "prepare": "lefthook install"
+  },
+  "dependencies": {
+    "zod": "^3.25.1"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
