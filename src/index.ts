@@ -4,11 +4,12 @@
  * Implementation lives in `src/*.ts`. This file re-exports the public API
  * so consumers import from the package root:
  *
- *   import { Tool, l1Output, l2Output, l3Output } from "@code-first-agents/tool";
+ *   import { Tool, l1Output, parseArgs, validateInput } from "@code-first-agents/tool";
  *
  * @module @code-first-agents/tool
  */
 
+export { parseArgs, validateInput } from "./args.ts";
 export type { ErrorEnvelope } from "./envelopes.ts";
 export { ToolError } from "./envelopes.ts";
 export type {
