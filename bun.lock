@@ -4,9 +4,6 @@
   "workspaces": {
     "": {
       "name": "bun-ts-template",
-      "dependencies": {
-        "zod": "^4.0.0",
-      },
       "devDependencies": {
         "@biomejs/biome": "latest",
         "@semantic-release/changelog": "latest",
@@ -15,6 +12,10 @@
         "lefthook": "latest",
         "semantic-release": "latest",
         "typescript": "latest",
+        "zod": "^4.0.0",
+      },
+      "peerDependencies": {
+        "zod": "^4.0.0",
       },
     },
   },
