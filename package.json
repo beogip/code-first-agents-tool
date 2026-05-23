@@ -1,17 +1,36 @@
 {
-  "name": "bun-ts-template",
+  "name": "@code-first-agents/tool",
   "version": "0.0.0",
-  "description": "Minimal TypeScript starter template for Bun",
+  "description": "TypeScript toolkit for the Code-First Agents specification",
   "license": "Apache-2.0",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beogip/code-first-agents-tool.git"
+  },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "rm -rf dist && tsc",
     "test": "bun test",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "@biomejs/biome": "latest",
@@ -20,6 +39,8 @@
     "semantic-release": "latest",
     "@semantic-release/changelog": "latest",
     "@semantic-release/git": "latest",
+    "@semantic-release/github": "latest",
+    "@semantic-release/npm": "latest",
     "typescript": "latest"
   }
 }

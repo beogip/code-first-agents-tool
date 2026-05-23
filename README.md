@@ -1,30 +1,44 @@
-# bun-ts-template
+# @code-first-agents/tool
 
-![CI](https://github.com/beogip/bun-ts-template/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/beogip/code-first-agents-tool/actions/workflows/ci.yml/badge.svg)
+[![npm](https://img.shields.io/npm/v/@code-first-agents/tool)](https://www.npmjs.com/package/@code-first-agents/tool)
 
-Minimal TypeScript starter for [Bun](https://bun.sh). Includes Biome for linting/formatting, Lefthook for git hooks, and semantic-release for automated versioning.
+TypeScript toolkit for the [Code-First Agents](https://github.com/beogip/code-first-agents-tool) specification.
 
-## Getting Started
-
-**Prerequisites:** [Bun](https://bun.sh) >= 1.0
+## Installation
 
 ```bash
-# Use this template on GitHub, then:
-git clone https://github.com/<your-username>/<your-repo>
-cd <your-repo>
-bun install
+bun add @code-first-agents/tool
+# or
+npm install @code-first-agents/tool
+```
+
+## Usage
+
+```ts
+import { greet } from "@code-first-agents/tool";
+
+console.log(greet("world")); // "Hello, world!"
 ```
 
 ## Development
 
-| Command          | Description                    |
-| ---------------- | ------------------------------ |
-| `bun run dev`    | Run with file watcher          |
-| `bun run build`  | Compile to `dist/`             |
-| `bun test`       | Run tests                      |
-| `bun run check`  | Lint + format (Biome, auto-fix)|
-| `bun run lint`   | Lint only                      |
-| `bun run format` | Format only                    |
+**Prerequisites:** [Bun](https://bun.sh) >= 1.0
+
+```bash
+git clone https://github.com/beogip/code-first-agents-tool.git
+cd code-first-agents-tool
+bun install
+```
+
+| Command          | Description                     |
+| ---------------- | ------------------------------- |
+| `bun run dev`    | Run with file watcher           |
+| `bun run build`  | Compile to `dist/` (tsc)        |
+| `bun test`       | Run tests                       |
+| `bun run check`  | Lint + format (Biome, auto-fix) |
+| `bun run lint`   | Lint only                       |
+| `bun run format` | Format only                     |
 
 ## Project Structure
 
@@ -49,4 +63,8 @@ Releases are automated via [semantic-release](https://semantic-release.gitbook.i
 - `fix:` → patch release
 - `feat!:` or `BREAKING CHANGE:` → major release
 
-The CI workflow handles changelog generation, GitHub releases, and version bumping automatically.
+The CI workflow handles changelog generation, npm publishing, GitHub releases, and version bumping automatically.
+
+## License
+
+[Apache-2.0](LICENSE)

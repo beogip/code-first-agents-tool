@@ -6,12 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-# Uncomment when enabling semantic-release.
-# permissions:
-#   contents: write
-#   issues: write
-#   pull-requests: write
-
 jobs:
   ci:
     name: Check & Test
@@ -22,12 +16,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # Uncomment when enabling semantic-release (requires Node >= 22).
-      # - name: Setup Node
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: 22
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -49,10 +37,40 @@ jobs:
       - name: Build
         run: bun run build
 
-      # Uncomment to enable automated releases via semantic-release.
-      # Requires Node >= 22 (setup-node step already included above).
-      # - name: Release
-      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   run: bunx semantic-release
+  release:
+    name: Release
+    needs: ci
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build
+        run: bun run build
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bunx semantic-release
