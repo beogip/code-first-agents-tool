@@ -27,3 +27,4 @@ export type {
   ToolMeta,
 } from "./types.ts";
 export type { ToolOutput } from "./utils.ts";
+export { jsonOutput, stringifyError } from "./utils.ts";
