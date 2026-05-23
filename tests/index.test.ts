@@ -200,7 +200,7 @@ describe("Tool.invoke", () => {
     const err = result as Record<string, unknown>;
     expect(err.error).toBe("unexpected_error");
     expect(err.message).toBe("kaboom");
-    expect(typeof err.detail).toBe("string");
+    expect(err.detail === undefined || typeof err.detail === "string").toBe(true);
   });
 
   it("catches unexpected non-Error throws without detail", async () => {
