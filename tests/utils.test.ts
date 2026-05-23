@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import { jsonOutput, stringifyError, type ToolOutput } from "../src/index.ts";
 
 describe("stringifyError", () => {
@@ -37,15 +37,12 @@ describe("jsonOutput", () => {
   // biome-ignore lint/suspicious/noConsole: mocking console.log to capture jsonOutput
   const originalLog = console.log;
 
-  afterEach(() => {
-    process.exit = originalExit;
-    console.log = originalLog;
-  });
+  let captured: string;
+  let exitCode: number | undefined;
 
-  it("serializes ToolOutput as JSON to stdout and exits with 0", () => {
-    let captured = "";
-    let exitCode: number | undefined;
-
+  beforeEach(() => {
+    captured = "";
+    exitCode = undefined;
     console.log = mock((...args: unknown[]) => {
       captured = String(args[0]);
     });
@@ -53,7 +50,14 @@ describe("jsonOutput", () => {
       exitCode = code;
       throw new Error("__exit__");
     }) as never;
+  });
 
+  afterEach(() => {
+    process.exit = originalExit;
+    console.log = originalLog;
+  });
+
+  it("serializes ToolOutput as JSON to stdout and exits with 0", () => {
     const data: ToolOutput = { ok: true, message: "done" };
 
     expect(() => jsonOutput(data)).toThrow("__exit__");
@@ -63,17 +67,6 @@ describe("jsonOutput", () => {
   });
 
   it("includes extra fields in the envelope", () => {
-    let captured = "";
-    let exitCode: number | undefined;
-
-    console.log = mock((...args: unknown[]) => {
-      captured = String(args[0]);
-    });
-    process.exit = mock((code?: number) => {
-      exitCode = code;
-      throw new Error("__exit__");
-    }) as never;
-
     const data: ToolOutput = {
       ok: false,
       message: "fail",
