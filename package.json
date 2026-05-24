@@ -1,8 +1,8 @@
 {
   "name": "@code-first-agents/tool",
-  "version": "0.0.0",
-  "description": "TypeScript toolkit for the Code-First Agents specification",
-  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "description": "Code-first agent tool definitions with Zod schemas",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +24,7 @@
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && bun build src/index.ts --outdir dist --format esm --target node --packages external && tsc -p tsconfig.build.json",
     "test": "bun test",
     "lint": "biome lint .",
     "format": "biome format --write .",
@@ -32,7 +32,11 @@
     "prepare": "lefthook install",
     "prepublishOnly": "bun run build"
   },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
   "devDependencies": {
+    "zod": "^4.0.0",
     "@biomejs/biome": "latest",
     "bun-types": "latest",
     "lefthook": "latest",

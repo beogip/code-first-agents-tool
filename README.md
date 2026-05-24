@@ -3,7 +3,7 @@
 ![CI](https://github.com/beogip/code-first-agents-tool/actions/workflows/ci.yml/badge.svg)
 [![npm](https://img.shields.io/npm/v/@code-first-agents/tool)](https://www.npmjs.com/package/@code-first-agents/tool)
 
-TypeScript toolkit for the [Code-First Agents](https://github.com/beogip/code-first-agents-tool) specification.
+Code-first agent tool definitions with Zod schemas.
 
 ## Installation
 
@@ -16,9 +16,15 @@ npm install @code-first-agents/tool
 ## Usage
 
 ```ts
-import { greet } from "@code-first-agents/tool";
+import { Tool, l1Output } from "@code-first-agents/tool";
+import { z } from "zod";
 
-console.log(greet("world")); // "Hello, world!"
+const greet = new Tool({
+  name: "greet",
+  description: "Say hello",
+  input: z.object({ name: z.string() }),
+  handler: async ({ input }) => l1Output("pass", `Hello, ${input.name}!`),
+});
 ```
 
 ## Development
@@ -34,7 +40,7 @@ bun install
 | Command          | Description                     |
 | ---------------- | ------------------------------- |
 | `bun run dev`    | Run with file watcher           |
-| `bun run build`  | Compile to `dist/` (tsc)        |
+| `bun run build`  | Compile to `dist/` (bun + tsc)  |
 | `bun test`       | Run tests                       |
 | `bun run check`  | Lint + format (Biome, auto-fix) |
 | `bun run lint`   | Lint only                       |
@@ -67,4 +73,4 @@ The CI workflow handles changelog generation, npm publishing, GitHub releases, a
 
 ## License
 
-[Apache-2.0](LICENSE)
+[MIT](LICENSE)

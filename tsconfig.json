@@ -3,6 +3,8 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
     "lib": ["ESNext"],
     "types": ["bun-types"],
     "strict": true,
@@ -11,11 +13,8 @@
     "noImplicitOverride": true,
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
-    "declaration": true,
-    "declarationMap": true,
-    "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"],
+  "include": ["src", "tests"],
   "exclude": ["node_modules", "dist"]
 }
