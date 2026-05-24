@@ -9,6 +9,9 @@ function runTool(...args: string[]): { stdout: string; stderr: string; exitCode:
     encoding: "utf-8",
     stdio: ["pipe", "pipe", "pipe"],
   });
+  if (result.error) {
+    throw new Error(`Failed to spawn bun: ${result.error.message}`);
+  }
   return {
     stdout: (result.stdout || "").trim(),
     stderr: (result.stderr || "").trim(),
@@ -17,7 +20,14 @@ function runTool(...args: string[]): { stdout: string; stderr: string; exitCode:
 }
 
 function parseOutput(stdout: string): Record<string, unknown> {
-  return JSON.parse(stdout);
+  if (!stdout) {
+    throw new Error("parseOutput: stdout is empty — tool produced no output");
+  }
+  try {
+    return JSON.parse(stdout);
+  } catch (e) {
+    throw new Error(`parseOutput: invalid JSON — ${(e as Error).message}\nstdout was: ${stdout}`);
+  }
 }
 
 describe("CLI — dispatch sync handler", () => {
@@ -72,6 +82,63 @@ describe("CLI — handler non-invocation on input validation failure", () => {
     const r = parseOutput(stdout);
     expect(r.ok).toBe(true);
     expect(stderr).toContain("HANDLER_CALLED");
+  });
+});
+
+describe("CLI — handler throws unexpected error", () => {
+  it("emits ok:false with error:'unexpected_error' and message from thrown Error", () => {
+    const { stdout, exitCode } = runTool("throws");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("unexpected_error");
+    expect(r.message).toBe("dummy-tool: intentional failure");
+    expect(typeof r.detail).toBe("string");
+  });
+});
+
+describe("CLI — handler throws ToolError", () => {
+  it("emits custom error code and message verbatim", () => {
+    const { stdout, exitCode } = runTool("businessError", "--code", "path_not_found");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("path_not_found");
+    expect(r.message).toBe("Business failure with code 'path_not_found'");
+  });
+
+  it("includes detail when provided", () => {
+    const { stdout, exitCode } = runTool(
+      "businessError",
+      "--code",
+      "rate_limited",
+      "--detail",
+      "retry after 60s",
+    );
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.error).toBe("rate_limited");
+    expect(r.detail).toBe("retry after 60s");
+  });
+
+  it("omits detail when not provided", () => {
+    const { stdout, exitCode } = runTool("businessError", "--code", "invalid_config");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.error).toBe("invalid_config");
+    expect("detail" in r).toBe(false);
+  });
+});
+
+describe("CLI — handler returns wrong shape", () => {
+  it("emits ok:false with error:'schema_violation'", () => {
+    const { stdout, exitCode } = runTool("badShape");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("schema_violation");
+    expect(typeof r.detail).toBe("string");
+    expect(r.detail as string).toMatch(/count/);
   });
 });
 
