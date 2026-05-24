@@ -1,6 +1,6 @@
 {
   "name": "@code-first-agents/tool",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Code-first agent tool definitions with Zod schemas",
   "license": "MIT",
   "type": "module",
