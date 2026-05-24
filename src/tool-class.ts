@@ -247,36 +247,7 @@ export class Tool {
     }
 
     const handlerResult = await spec.handler(inputResult.data);
-
-    if (!isPlainObject(handlerResult)) {
-      return nonObjectReturnEnvelope(name, handlerResult);
-    }
-
-    // `ok` last — prevents a handler from overriding the framework-managed field.
-    const fullResult = { ...handlerResult, ok: true as const };
-    const outputResult = spec.output.safeParse(fullResult);
-    if (!outputResult.success) {
-      return schemaViolationEnvelope(name, outputResult.error);
-    }
-
-    // Guard: Zod strip mode may remove `ok` if the output schema doesn't
-    // declare it (e.g. raw z.object without `ok: z.literal(true)`).
-    const data = outputResult.data as Record<string, unknown>;
-    if (!("ok" in data)) {
-      return schemaViolationEnvelope(
-        name,
-        new z.ZodError([
-          {
-            code: "custom",
-            path: ["ok"],
-            message:
-              "Output schema is missing 'ok' field — add ok: z.literal(true) or use l1Output/l2Output/l3Output helpers",
-          },
-        ]),
-      );
-    }
-
-    return data as ToolOutput;
+    return this.validateOutput(name, handlerResult, spec);
   }
 
   /**
@@ -313,37 +284,39 @@ export class Tool {
       }
 
       const handlerResult = await spec.handler(inputResult.data);
-
-      if (!isPlainObject(handlerResult)) {
-        return nonObjectReturnEnvelope(subcommand, handlerResult);
-      }
-
-      // `ok` last — prevents a handler from overriding the framework-managed field.
-      const fullResult = { ...handlerResult, ok: true as const };
-      const outputResult = spec.output.safeParse(fullResult);
-      if (!outputResult.success) {
-        return schemaViolationEnvelope(subcommand, outputResult.error);
-      }
-
-      const data = outputResult.data as Record<string, unknown>;
-      if (!("ok" in data)) {
-        return schemaViolationEnvelope(
-          subcommand,
-          new z.ZodError([
-            {
-              code: "custom",
-              path: ["ok"],
-              message:
-                "Output schema is missing 'ok' field — add ok: z.literal(true) or use l1Output/l2Output/l3Output helpers",
-            },
-          ]),
-        );
-      }
-
-      return data as ToolOutput;
+      return this.validateOutput(subcommand, handlerResult, spec);
     } catch (err) {
       if (err instanceof ToolError) return toolErrorEnvelope(err);
       return unexpectedErrorEnvelope(err);
     }
+  }
+
+  private validateOutput(name: string, handlerResult: unknown, spec: AnySpec): ToolOutput {
+    if (!isPlainObject(handlerResult)) {
+      return nonObjectReturnEnvelope(name, handlerResult);
+    }
+
+    const fullResult = { ...handlerResult, ok: true as const };
+    const outputResult = spec.output.safeParse(fullResult);
+    if (!outputResult.success) {
+      return schemaViolationEnvelope(name, outputResult.error);
+    }
+
+    const data = outputResult.data as Record<string, unknown>;
+    if (!("ok" in data)) {
+      return schemaViolationEnvelope(
+        name,
+        new z.ZodError([
+          {
+            code: "custom",
+            path: ["ok"],
+            message:
+              "Output schema is missing 'ok' field — add ok: z.literal(true) or use l1Output/l2Output/l3Output helpers",
+          },
+        ]),
+      );
+    }
+
+    return data as ToolOutput;
   }
 }
