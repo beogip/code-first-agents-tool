@@ -74,3 +74,4 @@ The CI workflow handles changelog generation, npm publishing, GitHub releases, a
 ## License
 
 [MIT](LICENSE)
+
