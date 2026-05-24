@@ -1,25 +1,50 @@
 {
-  "name": "bun-ts-template",
-  "version": "0.0.0",
-  "description": "Minimal TypeScript starter template for Bun",
-  "license": "Apache-2.0",
+  "name": "@code-first-agents/tool",
+  "version": "0.1.0",
+  "description": "Code-first agent tool definitions with Zod schemas",
+  "license": "MIT",
   "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beogip/code-first-agents-tool.git"
+  },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "rm -rf dist && bun build src/index.ts --outdir dist --format esm --target node --packages external && tsc -p tsconfig.build.json",
     "test": "bun test",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
-    "prepare": "lefthook install"
+    "prepare": "test -d .git && lefthook install || true",
+    "prepublishOnly": "bun run build"
+  },
+  "peerDependencies": {
+    "zod": "^4.0.0"
   },
   "devDependencies": {
+    "zod": "^4.0.0",
     "@biomejs/biome": "latest",
     "bun-types": "latest",
     "lefthook": "latest",
     "semantic-release": "latest",
     "@semantic-release/changelog": "latest",
     "@semantic-release/git": "latest",
+    "@semantic-release/github": "latest",
+    "@semantic-release/npm": "latest",
     "typescript": "latest"
   }
 }
