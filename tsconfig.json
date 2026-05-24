@@ -4,9 +4,6 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    // TODO: noEmit is required by allowImportingTsExtensions, but package.json
-    // declares "types": "./dist/index.d.ts". Add a tsconfig.build.json with
-    // emitDeclarationOnly: true when setting up the build pipeline.
     "noEmit": true,
     "lib": ["ESNext"],
     "types": ["bun-types"],
