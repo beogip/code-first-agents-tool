@@ -29,7 +29,7 @@
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
-    "prepare": "lefthook install",
+    "prepare": "test -d .git && lefthook install || true",
     "prepublishOnly": "bun run build"
   },
   "peerDependencies": {
