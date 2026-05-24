@@ -32,7 +32,7 @@ bunx tsc --noEmit            # type-check only
 The library exports a single `Tool` class that acts as the orchestrator. A tool registers subcommands (each with Zod input + output schemas and a handler), then calls `.run(process.argv.slice(2))` for CLI dispatch or `.invoke(name, args)` for programmatic use.
 
 **Dispatch pipeline (`tool-class.ts`):**
-1. `parseArgs` (args.ts) — tokenizes argv into `{subcommand, flags, positional}`
+1. `parseArgs` (args.ts) — tokenizes argv into `{subcommand, parsed: {flags, positional}}`
 2. Builtins — `schema` and `help` are auto-registered, never user-registerable
 3. `validateInput` (args.ts) — runs `safeParse` on merged flags + positional (`_` key)
 4. Handler execution — receives typed, validated input
