@@ -132,15 +132,15 @@ import { ToolError } from "@code-first-agents/tool";
 tool.subcommand({
   name: "validate",
   description: "Validate a config file",
-  input: z.object({ code: z.string() }).strict(),
+  input: z.object({ path: z.string() }).strict(),
   output: l1Output({}),
-  handler: ({ code }) => {
-    throw new ToolError(code, `Validation failed with code '${code}'`);
+  handler: ({ path }) => {
+    throw new ToolError("validation_failed", `Config at '${path}' is invalid`);
   },
 });
 ```
 
-The framework also handles: `unknown_subcommand`, `input_validation_error`, `schema_violation`, and `unexpected_error`.
+The framework also handles: `unknown_subcommand`, `input_validation_error`, `schema_violation`, `non_object_return`, and `unexpected_error`.
 
 ### Built-in subcommands
 
