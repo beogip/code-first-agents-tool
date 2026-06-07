@@ -48,7 +48,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2
         with:
-          bun-version: latest
+          bun-version: "1.2.x"
 
       - name: Install Claude Code
         run: |
@@ -62,7 +62,7 @@ jobs:
           path_to_claude_code_executable: ${{ env.CLAUDE_PATH }}
           trigger_phrase: "@claude"
           label_trigger: "claude"
-          track_progress: ${{ github.event_name != 'workflow_dispatch' }}
+          track_progress: true
           claude_args: "--model claude-opus-4-8 --allowedTools Write,Edit,Agent,Bash,Skill"
           plugin_marketplaces: |
             https://github.com/beogip/kael.marketplace.git
@@ -97,14 +97,16 @@ jobs:
             ### Step 2: Code
             Run /kael.code:implement-code <plan-file-path from step 1>
             Implement all steps from the plan.
-            If tests fail after one retry, proceed anyway.
+            If tests fail after one retry, mark this run as DEGRADED (remember it for Step 4)
+            and continue — never silently swallow a failing test suite.
 
             ### Step 3: Review
             Run /kael.code:implement-review
             If P0/P1 issues are found, attempt to fix them.
             If P0 issues remain after fix attempt, STOP the pipeline and post a comment
             on the issue explaining what failed and why.
-            P1 issues that remain after fix attempt are acceptable to proceed.
+            If P1 issues remain after fix attempt, mark this run as DEGRADED
+            (remember it for Step 4) and continue.
 
             ### Step 4: Deliver
             Run /kael.code:implement-deliver
@@ -113,4 +115,7 @@ jobs:
             ```
             gh pr create --title "feat: <issue title>" --body "Closes #${{ github.event.issue.number || inputs.issue_number }}" --head <branch_name>
             ```
+            If the run is DEGRADED (failing tests and/or remaining P1 issues), open the PR
+            as a DRAFT (`gh pr create --draft`) and post a comment listing every unresolved
+            failing test and P1 finding, so a human reviews before merge. Never auto-merge.
             The PR MUST exist before you finish — verify with `gh pr list --head <branch_name>`.
