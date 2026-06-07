@@ -1,3 +1,10 @@
+## [0.1.4](https://github.com/beogip/code-first-agents-tool/compare/v0.1.3...v0.1.4) (2026-06-07)
+
+
+### Bug Fixes
+
+* **package:** complete metadata for npm discovery ([#31](https://github.com/beogip/code-first-agents-tool/issues/31)) ([27dd3f6](https://github.com/beogip/code-first-agents-tool/commit/27dd3f65339a01376d15a569625bb4aa15f0a6fe)), closes [#24](https://github.com/beogip/code-first-agents-tool/issues/24)
+
 ## [0.1.3](https://github.com/beogip/code-first-agents-tool/compare/v0.1.2...v0.1.3) (2026-06-07)
 
 

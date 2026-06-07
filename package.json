@@ -1,6 +1,6 @@
 {
   "name": "@code-first-agents/tool",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A code-first-agents framework for building deterministic CLI tools that LLM agents can discover, validate, and invoke with zero guesswork. Powered by Zod schemas and structured output contracts.",
   "keywords": [
     "ai-agents",
