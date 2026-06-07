@@ -1,0 +1,116 @@
+name: Claude Code
+
+on:
+  issues:
+    types: [ labeled ]
+  issue_comment:
+    types: [ created ]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to implement"
+        required: true
+        type: number
+
+concurrency:
+  group: claude-issue-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  claude:
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.actor == 'beogip') ||
+      (github.event_name == 'issues' && github.event.label.name == 'claude' && github.actor == 'beogip') ||
+      (github.event_name == 'issue_comment' &&
+       contains(github.event.comment.body, '@claude') &&
+       github.event.comment.user.login == 'beogip')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git for private marketplace
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }} # GitHub PAT with repo read access to beogip/kael.marketplace (private)
+        run: |
+          if [ -z "$GH_PAT" ]; then echo "::error::GH_PAT secret is not set"; exit 1; fi
+          git config --global url."https://x-access-token:${GH_PAT}@github.com/beogip/kael.marketplace".insteadOf "https://github.com/beogip/kael.marketplace"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Claude Code
+        run: |
+          npm install -g @anthropic-ai/claude-code@2.1.120
+          echo "CLAUDE_PATH=$(which claude)" >> $GITHUB_ENV
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@30a67403f332e8c32badefb4cca3da7409065e8c # v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }} # Anthropic OAuth token for Claude Code
+          path_to_claude_code_executable: ${{ env.CLAUDE_PATH }}
+          trigger_phrase: "@claude"
+          label_trigger: "claude"
+          track_progress: ${{ github.event_name != 'workflow_dispatch' }}
+          claude_args: "--model claude-opus-4-6 --allowedTools Write,Edit,Agent,Bash,Skill"
+          plugin_marketplaces: |
+            https://github.com/beogip/kael.marketplace.git
+          plugins: |
+            kael.code@kael.marketplace
+          prompt: |
+            You are running in GitHub Actions CI — there is no human operator.
+            Execute the kael.code implementation pipeline for issue #${{ github.event.issue.number || inputs.issue_number }}.
+
+            ## CI MODE CONSTRAINTS
+
+            - NEVER use AskUserQuestion — you are in CI, there is no human to answer
+            - Auto-approve ALL approval gates — proceed with the plan as designed
+            - Skip ALL vault/Obsidian integration — there is no vault in CI
+            - At every decision point, choose the option that continues the workflow
+            - If tests fail, attempt ONE fix. If still failing, proceed anyway
+            - If a branch already exists, switch to it and continue
+
+            ## PROJECT NOTES
+
+            - This is a Bun + TypeScript library (`@code-first-agents/tool`).
+            - Run tests with `bun test`, lint/format with `bunx biome check .`, type-check with `bunx tsc --noEmit`.
+            - Follow Conventional Commits — the commit-msg hook enforces it.
+
+            ## PIPELINE — Execute in order
+
+            ### Step 1: Plan
+            Run /kael.code:implement-plan ${{ github.event.issue.number || inputs.issue_number }} --repo ${{ github.repository }}
+            When the plan is ready and the approval gate appears, approve it automatically.
+            Remember the plan file path — you need it for step 2.
+
+            ### Step 2: Code
+            Run /kael.code:implement-code <plan-file-path from step 1>
+            Implement all steps from the plan.
+            If tests fail after one retry, proceed anyway.
+
+            ### Step 3: Review
+            Run /kael.code:implement-review
+            If P0/P1 issues are found, attempt to fix them.
+            If P0 issues remain after fix attempt, STOP the pipeline and post a comment
+            on the issue explaining what failed and why.
+            P1 issues that remain after fix attempt are acceptable to proceed.
+
+            ### Step 4: Deliver
+            Run /kael.code:implement-deliver
+            Commit, push, and create the PR linked to issue #${{ github.event.issue.number || inputs.issue_number }}.
+            If /kael.code:implement-deliver fails to create the PR, create it manually:
+            ```
+            gh pr create --title "feat: <issue title>" --body "Closes #${{ github.event.issue.number || inputs.issue_number }}" --head <branch_name>
+            ```
+            The PR MUST exist before you finish — verify with `gh pr list --head <branch_name>`.
