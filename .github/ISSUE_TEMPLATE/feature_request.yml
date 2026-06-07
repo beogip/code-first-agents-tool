@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest an enhancement for @code-first-agents/tool
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting an improvement. Please describe the problem and your
+        proposal so the change can be evaluated against the spec.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem or limitation are you running into?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the change or feature you'd like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches or workarounds you've thought about.
+    validations:
+      required: false
+  - type: textarea
+    id: spec-alignment
+    attributes:
+      label: Spec alignment
+      description: >-
+        How does this fit the Code-First Agents pattern
+        (https://code-first-agents.com)? Note any tension with the tool contract.
+    validations:
+      required: false
