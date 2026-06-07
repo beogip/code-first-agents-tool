@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { z } from "zod";
-import type { HelpPayload, HelpPayloadEntry, SchemaOutputEntry, ToolMeta } from "../src/index.ts";
-import { l1Output, l2Output, l3Output, Tool, ToolError } from "../src/index.ts";
+import type { HelpPayload, HelpPayloadEntry, SchemaOutputEntry, ToolMeta } from "../src/index";
+import { l1Output, l2Output, l3Output, Tool, ToolError } from "../src/index";
 
 describe("Tool", () => {
   const meta: ToolMeta = { name: "test-tool", description: "A test tool" };

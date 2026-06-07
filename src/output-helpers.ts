@@ -26,7 +26,9 @@ import { z } from "zod";
  * @param fields - Raw data fields to include alongside the envelope.
  * @returns A `z.object` carrying `ok`, `message`, and the caller's fields.
  */
-export function l1Output<T extends z.ZodRawShape>(fields: T) {
+export function l1Output<T extends z.ZodRawShape>(
+  fields: T,
+): z.ZodObject<{ ok: z.ZodLiteral<true>; message: z.ZodString } & T> {
   return z.object({
     ok: z.literal(true),
     message: z.string(),

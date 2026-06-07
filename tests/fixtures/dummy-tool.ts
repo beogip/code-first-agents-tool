@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { z } from "zod";
-import { l1Output, l2Output, l3Output, Tool, ToolError } from "../../src/index.ts";
+import { l1Output, l2Output, l3Output, Tool, ToolError } from "../../src/index";
 
 const tool = new Tool({
   name: "dummy-tool",

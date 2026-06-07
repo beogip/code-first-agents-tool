@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { z } from "zod";
-import { parseArgs, validateInput } from "../src/index.ts";
+import { parseArgs, validateInput } from "../src/index";
 
 describe("parseArgs", () => {
   it("extracts the subcommand from argv[0]", () => {

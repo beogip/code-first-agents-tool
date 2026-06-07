@@ -54,7 +54,7 @@
  */
 
 import { z } from "zod";
-import { parseArgs, RESERVED_SUBCOMMANDS, validateInput } from "./args.ts";
+import { parseArgs, RESERVED_SUBCOMMANDS, validateInput } from "./args";
 import {
   inputValidationErrorEnvelope,
   nonObjectReturnEnvelope,
@@ -63,10 +63,10 @@ import {
   toolErrorEnvelope,
   unexpectedErrorEnvelope,
   unknownSubcommandEnvelope,
-} from "./envelopes.ts";
-import { buildHelpPayload, buildSchemaOutput } from "./introspection.ts";
-import type { ParsedArgs, SubcommandSpec, ToolMeta } from "./types.ts";
-import { jsonOutput, type ToolOutput } from "./utils.ts";
+} from "./envelopes";
+import { buildHelpPayload, buildSchemaOutput } from "./introspection";
+import type { ParsedArgs, SubcommandSpec, ToolMeta } from "./types";
+import { jsonOutput, type ToolOutput } from "./utils";
 
 /** Internal alias for the type-erased spec stored in the registry. */
 type AnySpec = SubcommandSpec<z.ZodTypeAny, z.ZodTypeAny>;

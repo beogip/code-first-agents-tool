@@ -9,7 +9,7 @@
  */
 
 import type { z } from "zod";
-import type { ParsedArgs } from "./types.ts";
+import type { ParsedArgs } from "./types";
 
 /**
  * Subcommand names reserved by the base class (`schema`, `help`).

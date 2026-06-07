@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import { jsonOutput, stringifyError, type ToolOutput } from "../src/index.ts";
+import { jsonOutput, stringifyError, type ToolOutput } from "../src/index";
 
 describe("stringifyError", () => {
   it("extracts message from Error instance", () => {

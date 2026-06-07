@@ -11,8 +11,8 @@
  */
 
 import type { z } from "zod";
-import { safeToJSONSchema } from "./json-schema.ts";
-import type { SubcommandSpec } from "./types.ts";
+import { safeToJSONSchema } from "./json-schema";
+import type { SubcommandSpec } from "./types";
 
 /** One entry in the `subcommands` help listing. */
 export interface HelpPayloadEntry {
