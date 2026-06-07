@@ -52,7 +52,7 @@ jobs:
 
       - name: Install Claude Code
         run: |
-          npm install -g @anthropic-ai/claude-code@2.1.120
+          npm install -g @anthropic-ai/claude-code@2.1.168
           echo "CLAUDE_PATH=$(which claude)" >> $GITHUB_ENV
 
       - name: Run Claude Code
@@ -63,7 +63,7 @@ jobs:
           trigger_phrase: "@claude"
           label_trigger: "claude"
           track_progress: ${{ github.event_name != 'workflow_dispatch' }}
-          claude_args: "--model claude-opus-4-6 --allowedTools Write,Edit,Agent,Bash,Skill"
+          claude_args: "--model claude-opus-4-8 --allowedTools Write,Edit,Agent,Bash,Skill"
           plugin_marketplaces: |
             https://github.com/beogip/kael.marketplace.git
           plugins: |
