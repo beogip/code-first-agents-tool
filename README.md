@@ -180,7 +180,7 @@ contract these implement.
 | `l1Output(shape)`            | function | Build an **L1 (data)** output schema — raw signals for the LLM to interpret.              |
 | `l2Output(classification, fields?)` | function | Build an **L2 (classification)** output schema — a discrete category to branch on. `classification` is any Zod type (commonly `z.enum(...)`). |
 | `l3Output(fields?)`          | function | Build an **L3 (instructions)** output schema — a verbatim procedure for the LLM. Fields are optional.     |
-| `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message)`.       |
+| `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message, detail?)`. Optional `detail` (string or object) is included in the error envelope's `detail` field. |
 | `schema` (builtin)           | command  | Auto-registered. Emits JSON Schema for every subcommand. Not user-overridable.           |
 | `help` (builtin)             | command  | Auto-registered. Emits a human-readable subcommand listing. Not user-overridable.        |
 
