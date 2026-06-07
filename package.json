@@ -16,7 +16,7 @@
     "url": "https://github.com/beogip/code-first-agents-tool/issues"
   },
   "license": "MIT",
-  "homepage": "https://code-first-agents.com",
+  "homepage": "https://github.com/beogip/code-first-agents-tool#readme",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
