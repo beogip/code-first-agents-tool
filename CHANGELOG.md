@@ -1,3 +1,10 @@
+## [0.1.3](https://github.com/beogip/code-first-agents-tool/compare/v0.1.2...v0.1.3) (2026-06-07)
+
+
+### Bug Fixes
+
+* **ci:** rewrite kael.code SSH URL to HTTPS so plugin install works in CI ([#29](https://github.com/beogip/code-first-agents-tool/issues/29)) ([f3239e9](https://github.com/beogip/code-first-agents-tool/commit/f3239e98f16b3c6f3caf764edb4dafa8d2fecb6c))
+
 ## [0.1.2](https://github.com/beogip/code-first-agents-tool/compare/v0.1.1...v0.1.2) (2026-06-07)
 
 
