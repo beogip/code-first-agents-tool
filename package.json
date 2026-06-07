@@ -24,21 +24,24 @@
   },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "build": "rm -rf dist && bun build src/index.ts --outdir dist --format esm --target node --packages external && tsc -p tsconfig.build.json",
+    "build": "rm -rf dist && bun build src/index.ts --outdir dist --format esm --target node --packages external && dts-bundle-generator --project tsconfig.json -o dist/index.d.ts src/index.ts",
     "test": "bun test",
     "lint": "biome lint .",
     "format": "biome format --write .",
     "check": "biome check --write .",
+    "attw": "attw --pack --ignore-rules cjs-resolves-to-esm",
     "prepare": "test -d .git && lefthook install || true",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build && bun run attw"
   },
   "peerDependencies": {
     "zod": "^4.0.0"
   },
   "devDependencies": {
     "zod": "^4.0.0",
+    "@arethetypeswrong/cli": "latest",
     "@biomejs/biome": "latest",
     "bun-types": "latest",
+    "dts-bundle-generator": "latest",
     "lefthook": "latest",
     "semantic-release": "latest",
     "@semantic-release/changelog": "latest",

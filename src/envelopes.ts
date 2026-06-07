@@ -11,10 +11,10 @@
  */
 
 import type { z } from "zod";
-import { buildHelpPayload, type HelpPayload } from "./introspection.ts";
-import { safeToJSONSchema } from "./json-schema.ts";
-import type { SubcommandSpec } from "./types.ts";
-import { stringifyError } from "./utils.ts";
+import { buildHelpPayload, type HelpPayload } from "./introspection";
+import { safeToJSONSchema } from "./json-schema";
+import type { SubcommandSpec } from "./types";
+import { stringifyError } from "./utils";
 
 /**
  * Discriminated union of every error envelope the base class can emit.

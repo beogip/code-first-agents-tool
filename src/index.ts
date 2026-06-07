@@ -9,23 +9,23 @@
  * @module @code-first-agents/tool
  */
 
-export { parseArgs, validateInput } from "./args.ts";
-export type { ErrorEnvelope } from "./envelopes.ts";
-export { ToolError } from "./envelopes.ts";
+export { parseArgs, validateInput } from "./args";
+export type { ErrorEnvelope } from "./envelopes";
+export { ToolError } from "./envelopes";
 export type {
   HelpPayload,
   HelpPayloadEntry,
   SchemaOutputEntry,
-} from "./introspection.ts";
-export { buildHelpPayload, buildSchemaOutput } from "./introspection.ts";
-export type { JSONSchemaResult } from "./json-schema.ts";
-export { l1Output, l2Output, l3Output } from "./output-helpers.ts";
-export { Tool } from "./tool-class.ts";
+} from "./introspection";
+export { buildHelpPayload, buildSchemaOutput } from "./introspection";
+export type { JSONSchemaResult } from "./json-schema";
+export { l1Output, l2Output, l3Output } from "./output-helpers";
+export { Tool } from "./tool-class";
 export type {
   HandlerReturn,
   ParsedArgs,
   SubcommandSpec,
   ToolMeta,
-} from "./types.ts";
-export type { ToolOutput } from "./utils.ts";
-export { jsonOutput, stringifyError } from "./utils.ts";
+} from "./types";
+export type { ToolOutput } from "./utils";
+export { jsonOutput, stringifyError } from "./utils";
