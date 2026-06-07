@@ -7,6 +7,9 @@ TypeScript implementation of the [Code-First Agents](https://code-first-agents.c
 
 **Key idea:** deterministic work lives in code (Tools), the LLM orchestrates judgment (Skills). This library is the Tool side.
 
+> ℹ️ This project is maintained in spare time. Issues and pull requests are very
+> welcome — please bear with best-effort response times.
+
 ## Installation
 
 ```bash
@@ -162,6 +165,28 @@ const result = await tool.invoke("multiply", { a: 6, b: 7 });
 // → { ok: true, message: "multiplied", product: 42 }
 ```
 
+## API Reference
+
+All exports come from the package root (`@code-first-agents/tool`). See the
+[spec](https://code-first-agents.com/patterns/deterministic-tools.html) for the
+contract these implement.
+
+| Export                       | Kind     | Purpose                                                                                  |
+| ---------------------------- | -------- | ---------------------------------------------------------------------------------------- |
+| `Tool`                       | class    | The orchestrator. Construct with `{ name, description }`, register subcommands, dispatch. |
+| `tool.subcommand(config)`    | method   | Register a subcommand with Zod `input`/`output` schemas and a `handler`.                  |
+| `tool.run(argv)`             | method   | Parse CLI args, dispatch, print the JSON envelope, and `process.exit(0)`.                 |
+| `tool.invoke(name, args)`    | method   | Call a subcommand in-process; returns the envelope object (useful in tests).             |
+| `l1Output(shape)`            | function | Build an **L1 (data)** output schema — raw signals for the LLM to interpret.              |
+| `l2Output(classification, fields?)` | function | Build an **L2 (classification)** output schema — a discrete category to branch on. `classification` is any Zod type (commonly `z.enum(...)`). |
+| `l3Output(fields?)`          | function | Build an **L3 (instructions)** output schema — a verbatim procedure for the LLM. Fields are optional.     |
+| `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message)`.       |
+| `schema` (builtin)           | command  | Auto-registered. Emits JSON Schema for every subcommand. Not user-overridable.           |
+| `help` (builtin)             | command  | Auto-registered. Emits a human-readable subcommand listing. Not user-overridable.        |
+
+Every successful result is the envelope `{ ok: true, message, ... }`; every error is
+`{ ok: false, error, ... }` with exit code `0`.
+
 ## Development
 
 **Prerequisites:** [Bun](https://bun.sh) >= 1.0
@@ -174,7 +199,7 @@ bun install
 
 | Command          | Description                     |
 | ---------------- | ------------------------------- |
-| `bun run dev`    | Run with file watcher           |
+| `bun run dev`    | Re-run `src/index.ts` on change (watch) |
 | `bun run build`  | Compile to `dist/` (bun + tsc)  |
 | `bun test`       | Run tests                       |
 | `bun run check`  | Lint + format (Biome, auto-fix) |
