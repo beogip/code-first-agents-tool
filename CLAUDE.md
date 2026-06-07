@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `@code-first-agents/tool` — the TypeScript implementation of the **Code-First Agents** pattern. This library provides the `Tool` base class that enforces the tool contract from the spec: deterministic CLI tools with Zod input/output schemas, JSON envelope output, self-describing `schema`/`help` introspection, and always-exit-0 semantics.
 
-**Spec:** https://github.com/beogip/code-first-agents/blob/main/specs/code-first-agents.md — the authoritative reference for the pattern. Key concepts this library implements:
+**Spec:** https://code-first-agents.com/patterns/deterministic-tools.html — the authoritative reference for the pattern. Key concepts this library implements:
 - **Tool contract:** named input params, JSON-only output, no LLM calls inside tools, deterministic results, `--schema` for self-description, loud failure modes.
 - **Output spectrum:** L1 (data — raw signals for LLM interpretation), L2 (classification — discrete categories with branching), L3 (instructions — complete procedures the LLM executes verbatim).
 - **Separation principle:** deterministic work lives in code (Tools), the LLM orchestrates judgment (Skills). This repo is the Tool side.

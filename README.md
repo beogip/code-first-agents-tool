@@ -3,7 +3,7 @@
 ![CI](https://github.com/beogip/code-first-agents-tool/actions/workflows/ci.yml/badge.svg)
 [![npm](https://img.shields.io/npm/v/@code-first-agents/tool)](https://www.npmjs.com/package/@code-first-agents/tool)
 
-TypeScript implementation of the [Code-First Agents](https://github.com/beogip/code-first-agents/blob/main/specs/code-first-agents.md) pattern. Provides a `Tool` base class that enforces the tool contract: deterministic CLI tools with Zod input/output schemas, JSON envelope output, self-describing introspection (`--schema`, `--help`), and always-exit-0 semantics.
+TypeScript implementation of the [Code-First Agents](https://code-first-agents.com/patterns/deterministic-tools.html) pattern. Provides a `Tool` base class that enforces the tool contract: deterministic CLI tools with Zod input/output schemas, JSON envelope output, self-describing introspection (`--schema`, `--help`), and always-exit-0 semantics.
 
 **Key idea:** deterministic work lives in code (Tools), the LLM orchestrates judgment (Skills). This library is the Tool side.
 
@@ -208,7 +208,7 @@ The CI workflow handles changelog generation, npm publishing, GitHub releases, a
 
 ## The Code-First Agents Pattern
 
-This library implements the tool contract from the [Code-First Agents spec](https://github.com/beogip/code-first-agents/blob/main/specs/code-first-agents.md). The spec defines a separation principle:
+This library implements the tool contract from the [Code-First Agents spec](https://code-first-agents.com/patterns/deterministic-tools.html). The spec defines a separation principle:
 
 - **Tools** (this library) — deterministic, no LLM calls, Zod-validated I/O, JSON envelope output.
 - **Skills** — LLM-powered orchestrators that call tools and apply judgment.
