@@ -40,10 +40,14 @@ jobs:
 
       - name: Configure git for private marketplace
         env:
-          GH_PAT: ${{ secrets.GH_PAT }} # GitHub PAT with repo read access to beogip/kael.marketplace (private)
+          GH_PAT: ${{ secrets.GH_PAT }} # GitHub PAT with repo read access to beogip/kael.marketplace AND beogip/kael.code (both private)
         run: |
           if [ -z "$GH_PAT" ]; then echo "::error::GH_PAT secret is not set"; exit 1; fi
+          # Marketplace is cloned over HTTPS — rewrite to inject the PAT.
           git config --global url."https://x-access-token:${GH_PAT}@github.com/beogip/kael.marketplace".insteadOf "https://github.com/beogip/kael.marketplace"
+          # The marketplace manifest references the kael.code plugin via an SSH URL, which has no
+          # key in CI. Rewrite it to authenticated HTTPS so the plugin install can clone it.
+          git config --global url."https://x-access-token:${GH_PAT}@github.com/beogip/kael.code".insteadOf "git@github.com:beogip/kael.code"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2
