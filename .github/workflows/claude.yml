@@ -46,7 +46,7 @@ jobs:
           git config --global url."https://x-access-token:${GH_PAT}@github.com/beogip/kael.marketplace".insteadOf "https://github.com/beogip/kael.marketplace"
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+        uses: oven-sh/setup-bun@4bc047ad259df6fc24a6c9b0f9a0cb08cf17fbe5 # v2
         with:
           bun-version: latest
 
