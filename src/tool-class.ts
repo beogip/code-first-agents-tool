@@ -9,7 +9,7 @@
  *   so LLM callers can self-correct
  * - Always exits with code 0; errors communicated via `ok: false` envelope
  *
- * Spec: https://beogip.github.io/code-first-agents/patterns/deterministic-tools.html
+ * Spec: https://code-first-agents.com/patterns/deterministic-tools.html
  *
  * ## Usage
  *
