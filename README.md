@@ -165,6 +165,17 @@ const result = await tool.invoke("multiply", { a: 6, b: 7 });
 // → { ok: true, message: "multiplied", product: 42 }
 ```
 
+## Examples
+
+A complete, clonable tool lives in [`examples/`](examples/) — run it and compare the JSON, no build step required:
+
+```bash
+bun run examples/changeset.ts size --files 12 --additions 340 --deletions 50
+# → {"ok":true,"message":"changeset classified as large","classification":"large","total_lines":390}
+```
+
+`examples/changeset.ts` is one tool that demonstrates all three output levels (L1 data, L2 classification, L3 instructions). See [`examples/README.md`](examples/README.md) for the full walkthrough.
+
 ## API Reference
 
 All exports come from the package root (`@code-first-agents/tool`). See the
