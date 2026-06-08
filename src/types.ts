@@ -21,9 +21,16 @@ export interface ToolMeta {
  * Raw CLI args after parsing. Flags are `--key value` pairs; bare `--flag`
  * (with no following value) resolves to `true`. Positional args are any
  * tokens that don't start with `--`.
+ *
+ * **`_` is reserved:** at validation time positional args are attached under
+ * the `_` key, so an explicit `--_` flag is overwritten by positionals when
+ * both are present (a stderr warning is emitted in that case).
  */
 export interface ParsedArgs {
-  /** Flag key → value mapping. Last-one-wins on repeated keys. */
+  /**
+   * Flag key → value mapping. Last-one-wins on repeated keys. The `_` key is
+   * reserved for positional args and should not be used as a flag name.
+   */
   flags: Record<string, string | true>;
   /** Positional (non-flag) tokens in order. */
   positional: string[];
@@ -52,8 +59,10 @@ export interface SubcommandSpec<I extends z.ZodTypeAny, O extends z.ZodTypeAny> 
   description: string;
   /**
    * Zod schema for the validated flags + positional args. Positional args
-   * are exposed under a reserved `_` key when present. Use `.strict()` to
-   * reject unknown flags loudly.
+   * are exposed under a reserved `_` key when present — declare `_` in the
+   * schema to consume them. Avoid declaring a `--_` flag: positionals
+   * overwrite it (with a stderr warning). Use `.strict()` to reject unknown
+   * flags loudly.
    *
    * **Sync only:** the base class uses `safeParse` (not `safeParseAsync`).
    * Schemas with `.refine(async ...)` or `.transform(async ...)` will cause

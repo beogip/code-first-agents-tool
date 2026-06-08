@@ -111,4 +111,15 @@ tool.subcommand({
   },
 });
 
+tool.subcommand({
+  name: "echoArgs",
+  description: "Echo positional args (input schema declares the reserved _ key)",
+  input: z.object({ _: z.array(z.string()).optional() }).strict(),
+  output: l1Output({ args: z.array(z.string()) }),
+  handler: ({ _ }) => ({
+    message: "echoed positional args",
+    args: _ ?? [],
+  }),
+});
+
 tool.run(process.argv.slice(2));

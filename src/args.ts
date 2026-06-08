@@ -109,6 +109,12 @@ export function parseArgs(argv: string[]): { subcommand: string; parsed: ParsedA
  * key only when present (so strict schemas without `_` stay happy when no
  * positional args are passed).
  *
+ * **`_` is reserved for positional args.** When positionals are present, they
+ * are attached under `_`, overwriting any explicit `--_` flag. Because a silent
+ * overwrite is a footgun, this function emits a loud warning to stderr when both
+ * an explicit `--_` flag and positional args are passed (stdout stays reserved
+ * for the JSON envelope). The overwrite itself is unchanged — positionals win.
+ *
  * @param parsed - Raw parsed args from {@link parseArgs}.
  * @param inputSchema - The subcommand's input Zod schema.
  * @returns The Zod `safeParse` result carrying either validated data or a structured error.
@@ -116,6 +122,13 @@ export function parseArgs(argv: string[]): { subcommand: string; parsed: ParsedA
 export function validateInput<I extends z.ZodTypeAny>(parsed: ParsedArgs, inputSchema: I) {
   const toValidate: Record<string, unknown> = { ...parsed.flags };
   if (parsed.positional.length > 0) {
+    if (Object.hasOwn(parsed.flags, "_")) {
+      // `_` is reserved for positional args; the explicit `--_` flag is about to
+      // be clobbered. Warn loudly on stderr — stdout carries the JSON envelope.
+      process.stderr.write(
+        'warning: "_" is reserved for positional arguments; the explicit --_ flag was overwritten by positional args\n',
+      );
+    }
     toValidate._ = parsed.positional;
   }
   return inputSchema.safeParse(toValidate);
