@@ -230,6 +230,25 @@ describe("CLI — global --help / --schema flag override", () => {
   });
 });
 
+describe("CLI — reserved _ key collision", () => {
+  it("warns on stderr and positionals win when both --_ and positionals are passed", () => {
+    const { stdout, stderr, exitCode } = runTool("echoArgs", "--_", "explicit", "pos1", "pos2");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.ok).toBe(true);
+    expect(r.args).toEqual(["pos1", "pos2"]);
+    expect(stderr).toContain('"_" is reserved');
+  });
+
+  it("does not warn when only positionals are passed (no --_ flag)", () => {
+    const { stdout, stderr, exitCode } = runTool("echoArgs", "pos1", "pos2");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.args).toEqual(["pos1", "pos2"]);
+    expect(stderr).not.toContain("reserved");
+  });
+});
+
 describe("CLI — exit code is always 0", () => {
   it.each([
     ["greet", ["--name", "x"]],

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, spyOn } from "bun:test";
 import { z } from "zod";
 import { parseArgs, validateInput } from "../src/index";
 
@@ -142,6 +142,46 @@ describe("validateInput", () => {
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data._).toEqual(["a", "b"]);
+    }
+  });
+
+  it("warns on stderr when an explicit _ flag is overwritten by positionals", () => {
+    const writeSpy = spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      const schema = z.object({ _: z.array(z.string()) });
+      validateInput(
+        { flags: { _: "explicit" as unknown as string | true }, positional: ["a", "b"] },
+        schema,
+      );
+      expect(writeSpy).toHaveBeenCalledTimes(1);
+      expect(writeSpy.mock.calls[0]?.[0]).toContain('"_" is reserved');
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it("does not warn when positionals are present but no _ flag", () => {
+    const writeSpy = spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      const schema = z.object({ _: z.array(z.string()) }).strict();
+      validateInput({ flags: {}, positional: ["a", "b"] }, schema);
+      expect(writeSpy).not.toHaveBeenCalled();
+    } finally {
+      writeSpy.mockRestore();
+    }
+  });
+
+  it("does not warn when a _ flag is present but no positionals", () => {
+    const writeSpy = spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      const schema = z.object({ _: z.string() }).strict();
+      validateInput(
+        { flags: { _: "explicit" as unknown as string | true }, positional: [] },
+        schema,
+      );
+      expect(writeSpy).not.toHaveBeenCalled();
+    } finally {
+      writeSpy.mockRestore();
     }
   });
 });
