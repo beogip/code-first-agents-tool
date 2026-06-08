@@ -12,12 +12,6 @@
 export { parseArgs, validateInput } from "./args";
 export type { ErrorEnvelope } from "./envelopes";
 export { ToolError } from "./envelopes";
-export type {
-  HelpPayload,
-  HelpPayloadEntry,
-  SchemaOutputEntry,
-} from "./introspection";
-export { buildHelpPayload, buildSchemaOutput } from "./introspection";
 export type { JSONSchemaResult } from "./json-schema";
 export { l1Output, l2Output, l3Output } from "./output-helpers";
 export { Tool } from "./tool-class";
