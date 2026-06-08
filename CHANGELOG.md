@@ -1,3 +1,11 @@
+## [0.1.5](https://github.com/beogip/code-first-agents-tool/compare/v0.1.4...v0.1.5) (2026-06-08)
+
+
+### Bug Fixes
+
+* **args:** warn when positionals overwrite an explicit --_ flag ([#39](https://github.com/beogip/code-first-agents-tool/issues/39)) ([366b422](https://github.com/beogip/code-first-agents-tool/commit/366b42295ec5d199ce86afe6a63f6a80f194b49a)), closes [#19](https://github.com/beogip/code-first-agents-tool/issues/19)
+* emit extension-free bundled declarations for published types ([#33](https://github.com/beogip/code-first-agents-tool/issues/33)) ([3841ab1](https://github.com/beogip/code-first-agents-tool/commit/3841ab14b10c0636fa4f4aba0ba193c2ed3dbedd)), closes [#18](https://github.com/beogip/code-first-agents-tool/issues/18)
+
 ## [0.1.4](https://github.com/beogip/code-first-agents-tool/compare/v0.1.3...v0.1.4) (2026-06-07)
 
 
