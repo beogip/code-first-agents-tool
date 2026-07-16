@@ -251,6 +251,17 @@ This library implements the tool contract from the [Code-First Agents spec](http
 
 If you're new to the pattern, start with the [spec repo](https://github.com/beogip/code-first-agents) for the full picture of how tools, skills, and agents compose together.
 
+## Contributing
+
+Contributions are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) for the
+issue-first workflow, development setup, and commit conventions, and please review
+the [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for the release history, generated automatically
+by semantic-release.
+
 ## License
 
 [MIT](LICENSE)
