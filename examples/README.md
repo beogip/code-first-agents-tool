@@ -13,14 +13,14 @@ bun install
 The examples import from `../src/index.ts`, so they run against the source with **no build step**. In your own project you'd install the package and import from `@code-first-agents/tool` instead:
 
 ```ts
-import { Tool, l1Output, l2Output, l3Output } from "@code-first-agents/tool";
+import { Tool, dataTypeOutput, classificationTypeOutput, procedureTypeOutput } from "@code-first-agents/tool";
 ```
 
-## `changeset.ts` — one tool, all three output levels
+## `changeset.ts` — one tool, all three tool types
 
-`changeset` analyzes the shape of a changeset (files touched, lines added/removed) and prepares it for review. The work is fully deterministic — same input flags, same JSON, no LLM calls inside the tool. It exposes one subcommand per output level from the spec.
+`changeset` analyzes the shape of a changeset (files touched, lines added/removed) and prepares it for review. The work is fully deterministic — same input flags, same JSON, no LLM calls inside the tool. It exposes one subcommand per tool type from the spec.
 
-### L1 — Data (raw signals for the LLM to interpret)
+### Data — raw signals for the LLM to interpret
 
 ```bash
 bun run examples/changeset.ts stats --files 12 --additions 340 --deletions 50
@@ -30,7 +30,7 @@ bun run examples/changeset.ts stats --files 12 --additions 340 --deletions 50
 {"ok":true,"message":"changeset stats computed","files":12,"additions":340,"deletions":50,"total_lines":390}
 ```
 
-### L2 — Classification (a discrete category the skill can branch on)
+### Classification — a discrete category the skill can branch on
 
 ```bash
 bun run examples/changeset.ts size --files 12 --additions 340 --deletions 50
@@ -40,7 +40,7 @@ bun run examples/changeset.ts size --files 12 --additions 340 --deletions 50
 {"ok":true,"message":"changeset classified as large","classification":"large","total_lines":390}
 ```
 
-### L3 — Instructions (a verbatim procedure the LLM executes)
+### Procedure — a verbatim procedure the LLM executes
 
 ```bash
 bun run examples/changeset.ts review-plan --files 12 --additions 340 --deletions 50
@@ -50,7 +50,7 @@ bun run examples/changeset.ts review-plan --files 12 --additions 340 --deletions
 {"ok":true,"message":"review plan generated for large changeset","instructions":"## Review plan (large)\n1. Ask for a written summary of the approach.\n2. Review module by module, highest-risk first.\n3. Require tests for each new code path.\n4. Run the suite locally before approving.","size":"large"}
 ```
 
-The `instructions` string is what an L3 tool hands back: a complete procedure the LLM follows verbatim, chosen deterministically from the changeset size.
+The `instructions` string is what a procedure tool hands back: a complete procedure the LLM follows verbatim, chosen deterministically from the changeset size.
 
 ## Built-in introspection
 

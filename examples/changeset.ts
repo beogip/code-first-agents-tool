@@ -3,11 +3,11 @@
  * changeset.ts — a complete, runnable Code-First Agents tool.
  *
  * It analyzes the shape of a changeset (files touched + lines added/removed)
- * and demonstrates all three output levels from the spec with one tool:
+ * and demonstrates all three tool types from the spec with one tool:
  *
- *   stats        L1 — raw signals for the LLM to interpret
- *   size         L2 — a discrete size class the skill can branch on
- *   review-plan  L3 — a verbatim review procedure the LLM executes
+ *   stats        Data — raw signals for the LLM to interpret
+ *   size         Classification — a discrete size class the skill can branch on
+ *   review-plan  Procedure — a verbatim review procedure the LLM executes
  *
  * The work is fully deterministic: same input flags → same JSON. No LLM
  * calls happen inside the tool — that's the whole point of the pattern.
@@ -24,11 +24,21 @@
  * source in this repo with no build step. In your own project you would
  * install the package and import from "@code-first-agents/tool" instead:
  *
- *   import { Tool, l1Output, l2Output, l3Output } from "@code-first-agents/tool";
+ *   import {
+ *     Tool,
+ *     dataTypeOutput,
+ *     classificationTypeOutput,
+ *     procedureTypeOutput,
+ *   } from "@code-first-agents/tool";
  */
 
 import { z } from "zod";
-import { l1Output, l2Output, l3Output, Tool } from "../src/index.ts";
+import {
+  classificationTypeOutput,
+  dataTypeOutput,
+  procedureTypeOutput,
+  Tool,
+} from "../src/index.ts";
 
 /** Shared input: the raw shape of a changeset, supplied as CLI flags. */
 const changesetInput = z
@@ -73,12 +83,12 @@ const tool = new Tool({
   description: "Analyze the shape of a changeset and prepare it for review",
 });
 
-// L1 — Data: raw signals, no interpretation. The LLM decides what they mean.
+// Data: raw signals, no interpretation. The LLM decides what they mean.
 tool.subcommand({
   name: "stats",
-  description: "Emit raw changeset signals (L1 — data)",
+  description: "Emit raw changeset signals (data)",
   input: changesetInput,
-  output: l1Output({
+  output: dataTypeOutput({
     files: z.number(),
     additions: z.number(),
     deletions: z.number(),
@@ -93,12 +103,12 @@ tool.subcommand({
   }),
 });
 
-// L2 — Classification: a discrete category the calling skill can branch on.
+// Classification: a discrete category the calling skill can branch on.
 tool.subcommand({
   name: "size",
-  description: "Classify the changeset size (L2 — classification)",
+  description: "Classify the changeset size (classification)",
   input: changesetInput,
-  output: l2Output(SizeClass, { total_lines: z.number() }),
+  output: classificationTypeOutput(SizeClass, { total_lines: z.number() }),
   handler: ({ files, additions, deletions }) => {
     const classification = classifySize(files, additions, deletions);
     return {
@@ -109,12 +119,12 @@ tool.subcommand({
   },
 });
 
-// L3 — Instructions: a complete procedure for the LLM to execute verbatim.
+// Procedure: a complete procedure for the LLM to execute verbatim.
 tool.subcommand({
   name: "review-plan",
-  description: "Emit a verbatim review procedure for the changeset (L3 — instructions)",
+  description: "Emit a verbatim review procedure for the changeset (procedure)",
   input: changesetInput,
-  output: l3Output({ size: SizeClass }),
+  output: procedureTypeOutput({ size: SizeClass }),
   handler: ({ files, additions, deletions }) => {
     const size = classifySize(files, additions, deletions);
     return {

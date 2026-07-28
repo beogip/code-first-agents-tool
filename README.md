@@ -29,7 +29,7 @@ A `Tool` registers subcommands — each with a Zod input schema, an output schem
 ```ts
 #!/usr/bin/env bun
 import { z } from "zod";
-import { Tool, l1Output } from "@code-first-agents/tool";
+import { Tool, dataTypeOutput } from "@code-first-agents/tool";
 
 const tool = new Tool({
   name: "math",
@@ -43,7 +43,7 @@ tool.subcommand({
     a: z.coerce.number(),
     b: z.coerce.number(),
   }).strict(),
-  output: l1Output({ product: z.number() }),
+  output: dataTypeOutput({ product: z.number() }),
   handler: ({ a, b }) => ({
     message: "multiplied",
     product: a * b,
@@ -60,20 +60,20 @@ bun run math.ts multiply --a 6 --b 7
 # → {"ok":true,"message":"multiplied","product":42}
 ```
 
-### Output levels
+### Output types
 
-The spec defines three output levels. Use the corresponding helper to build the output schema:
+The spec defines three tool types. Use the corresponding helper to build the output schema:
 
-**L1 — Data** (raw facts for the LLM to interpret):
+**Data** (raw facts for the LLM to interpret):
 
 ```ts
-import { l1Output } from "@code-first-agents/tool";
+import { dataTypeOutput } from "@code-first-agents/tool";
 
 tool.subcommand({
   name: "greet",
   description: "Greet someone by name",
   input: z.object({ name: z.string() }).strict(),
-  output: l1Output({ greeting: z.string() }),
+  output: dataTypeOutput({ greeting: z.string() }),
   handler: ({ name }) => ({
     message: `greeted ${name}`,
     greeting: `hello ${name}`,
@@ -81,10 +81,10 @@ tool.subcommand({
 });
 ```
 
-**L2 — Classification** (a discrete category the skill can branch on):
+**Classification** (a discrete category the skill can branch on):
 
 ```ts
-import { l2Output } from "@code-first-agents/tool";
+import { classificationTypeOutput } from "@code-first-agents/tool";
 
 tool.subcommand({
   name: "report",
@@ -92,7 +92,7 @@ tool.subcommand({
   input: z.object({
     level: z.enum(["info", "debug"]).default("info"),
   }).strict(),
-  output: l2Output(z.enum(["info", "debug"])),
+  output: classificationTypeOutput(z.enum(["info", "debug"])),
   handler: ({ level }) => ({
     message: `report generated (level=${level})`,
     classification: level,
@@ -100,16 +100,16 @@ tool.subcommand({
 });
 ```
 
-**L3 — Instructions** (a verbatim procedure for the LLM to execute):
+**Procedure** (a verbatim procedure for the LLM to execute):
 
 ```ts
-import { l3Output } from "@code-first-agents/tool";
+import { procedureTypeOutput } from "@code-first-agents/tool";
 
 tool.subcommand({
   name: "instruct",
   description: "Emit a verbatim instruction set",
   input: z.object({}).strict(),
-  output: l3Output({ topic: z.string() }),
+  output: procedureTypeOutput({ topic: z.string() }),
   handler: () => ({
     message: "instructions generated",
     instructions: "## Step 1\nDo the thing.",
@@ -136,7 +136,7 @@ tool.subcommand({
   name: "validate",
   description: "Validate a config file",
   input: z.object({ path: z.string() }).strict(),
-  output: l1Output({}),
+  output: dataTypeOutput({}),
   handler: ({ path }) => {
     throw new ToolError("validation_failed", `Config at '${path}' is invalid`);
   },
@@ -174,7 +174,7 @@ bun run examples/changeset.ts size --files 12 --additions 340 --deletions 50
 # → {"ok":true,"message":"changeset classified as large","classification":"large","total_lines":390}
 ```
 
-`examples/changeset.ts` is one tool that demonstrates all three output levels (L1 data, L2 classification, L3 instructions). See [`examples/README.md`](examples/README.md) for the full walkthrough.
+`examples/changeset.ts` is one tool that demonstrates all three tool types (data, classification, procedure). See [`examples/README.md`](examples/README.md) for the full walkthrough.
 
 ## API Reference
 
@@ -188,9 +188,10 @@ contract these implement.
 | `tool.subcommand(config)`    | method   | Register a subcommand with Zod `input`/`output` schemas and a `handler`.                  |
 | `tool.run(argv)`             | method   | Parse CLI args, dispatch, print the JSON envelope, and `process.exit(0)`.                 |
 | `tool.invoke(name, args)`    | method   | Call a subcommand in-process; returns the envelope object (useful in tests).             |
-| `l1Output(shape)`            | function | Build an **L1 (data)** output schema — raw signals for the LLM to interpret.              |
-| `l2Output(classification, fields?)` | function | Build an **L2 (classification)** output schema — a discrete category to branch on. `classification` is any Zod type (commonly `z.enum(...)`). |
-| `l3Output(fields?)`          | function | Build an **L3 (instructions)** output schema — a verbatim procedure for the LLM. Fields are optional.     |
+| `dataTypeOutput(shape)`            | function | Build a **data** output schema — raw signals for the LLM to interpret.              |
+| `classificationTypeOutput(classification, fields?)` | function | Build a **classification** output schema — a discrete category to branch on. `classification` is any Zod type (commonly `z.enum(...)`). |
+| `procedureTypeOutput(fields?)`          | function | Build a **procedure** output schema — a verbatim procedure for the LLM. Fields are optional.     |
+| `l1Output` / `l2Output` / `l3Output` | function | **Deprecated** aliases of `dataTypeOutput` / `classificationTypeOutput` / `procedureTypeOutput`. Kept until the next breaking change, then removed. |
 | `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message, detail?)`. Optional `detail` (string or object) is included in the error envelope's `detail` field. |
 | `schema` (builtin)           | command  | Auto-registered. Emits JSON Schema for every subcommand. Not user-overridable.           |
 | `help` (builtin)             | command  | Auto-registered. Emits a human-readable subcommand listing. Not user-overridable.        |

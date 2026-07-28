@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Spec:** https://code-first-agents.com/patterns/deterministic-tools.html — the authoritative reference for the pattern. Key concepts this library implements:
 - **Tool contract:** named input params, JSON-only output, no LLM calls inside tools, deterministic results, `--schema` for self-description, loud failure modes.
-- **Output spectrum:** L1 (data — raw signals for LLM interpretation), L2 (classification — discrete categories with branching), L3 (instructions — complete procedures the LLM executes verbatim).
+- **Tool types:** Data (raw signals for LLM interpretation), Classification (discrete categories with branching), Procedure (complete procedures the LLM executes verbatim).
 - **Separation principle:** deterministic work lives in code (Tools), the LLM orchestrates judgment (Skills). This repo is the Tool side.
 
 When making design decisions about API surface, error handling, or output shapes, defer to the spec. If something in this codebase contradicts the spec, the spec wins.
@@ -39,7 +39,7 @@ The library exports a single `Tool` class that acts as the orchestrator. A tool 
 5. Output stamping — framework adds `ok: true` to handler return before output validation
 6. `jsonOutput` (utils.ts) — serializes envelope to stdout, `process.exit(0)`
 
-**Output levels (`output-helpers.ts`):** `l1Output` (raw data), `l2Output` (classification enum), `l3Output` (instructions string). These compose the `{ok, message, ...}` envelope schema.
+**Output helpers (`output-helpers.ts`):** `dataTypeOutput` (raw data), `classificationTypeOutput` (classification enum), `procedureTypeOutput` (instructions string). These compose the `{ok, message, ...}` envelope schema. `l1Output` / `l2Output` / `l3Output` remain exported as `@deprecated` aliases until the next breaking change.
 
 **Error envelopes (`envelopes.ts`):** All errors exit 0 with `ok: false`. Codes: `unknown_subcommand`, `input_validation_error`, `schema_violation`, `non_object_return`, `unexpected_error`. Handlers throw `ToolError` for business-specific error codes.
 
@@ -52,6 +52,6 @@ The library exports a single `Tool` class that acts as the orchestrator. A tool 
 - **Strict TypeScript:** `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`.
 - Tests use `bun:test`. Unit tests (`index.test.ts`, `args.test.ts`) use `Tool.invoke()`. Black-box CLI tests (`cli.test.ts`) spawn `tests/fixtures/dummy-tool.ts` as a subprocess.
 - All CLI flags are `--key value` pairs. Positional args go under the `_` key. The `--` sentinel ends flag parsing (POSIX).
-- Input schemas should use `.strict()` to reject unknown flags. Output schemas should use level helpers or include `ok: z.literal(true)` + `message: z.string()`.
+- Input schemas should use `.strict()` to reject unknown flags. Output schemas should use tool-type helpers or include `ok: z.literal(true)` + `message: z.string()`.
 - Handlers return the output shape **without** `ok` — the framework stamps it.
 - Releases are automated via semantic-release on push to `main`. npm publishing uses `NODE_AUTH_TOKEN`.

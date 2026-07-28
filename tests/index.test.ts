@@ -1,7 +1,16 @@
 import { describe, expect, it } from "bun:test";
 import { z } from "zod";
 import type { ToolMeta } from "../src/index";
-import { l1Output, l2Output, l3Output, Tool, ToolError } from "../src/index";
+import {
+  classificationTypeOutput,
+  dataTypeOutput,
+  l1Output,
+  l2Output,
+  l3Output,
+  procedureTypeOutput,
+  Tool,
+  ToolError,
+} from "../src/index";
 import type { HelpPayload, HelpPayloadEntry, SchemaOutputEntry } from "../src/introspection";
 
 describe("Tool", () => {
@@ -17,7 +26,7 @@ describe("Tool", () => {
       name: "ping",
       description: "Ping",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "pong" }),
     });
     expect(tool).toBeInstanceOf(Tool);
@@ -29,7 +38,7 @@ describe("Tool", () => {
         name: "schema",
         description: "bad",
         input: z.object({}).strict(),
-        output: l1Output({}),
+        output: dataTypeOutput({}),
         handler: () => ({ message: "nope" }),
       }),
     ).toThrow(RangeError);
@@ -41,7 +50,7 @@ describe("Tool", () => {
         name: "help",
         description: "bad",
         input: z.object({}).strict(),
-        output: l1Output({}),
+        output: dataTypeOutput({}),
         handler: () => ({ message: "nope" }),
       }),
     ).toThrow(RangeError);
@@ -54,14 +63,14 @@ describe("Tool", () => {
           name: "dup",
           description: "first",
           input: z.object({}).strict(),
-          output: l1Output({}),
+          output: dataTypeOutput({}),
           handler: () => ({ message: "first" }),
         })
         .subcommand({
           name: "dup",
           description: "second",
           input: z.object({}).strict(),
-          output: l1Output({}),
+          output: dataTypeOutput({}),
           handler: () => ({ message: "second" }),
         }),
     ).toThrow(RangeError);
@@ -73,7 +82,7 @@ describe("Tool", () => {
         name: "no-input",
         description: "Missing input",
         input: undefined as unknown as z.ZodTypeAny,
-        output: l1Output({}),
+        output: dataTypeOutput({}),
         handler: () => ({ message: "nope" }),
       }),
     ).toThrow(TypeError);
@@ -100,7 +109,7 @@ describe("Tool.invoke", () => {
       name: "greet",
       description: "Greet someone",
       input: z.object({ name: z.string() }).strict(),
-      output: l1Output({ greeting: z.string() }),
+      output: dataTypeOutput({ greeting: z.string() }),
       handler: ({ name }) => ({ message: "ok", greeting: `Hello, ${name}!` }),
     });
 
@@ -124,7 +133,7 @@ describe("Tool.invoke", () => {
       name: "strict",
       description: "Strict input",
       input: z.object({ required_field: z.string() }).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "ok" }),
     });
 
@@ -138,7 +147,7 @@ describe("Tool.invoke", () => {
       name: "ping",
       description: "Ping pong",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "pong" }),
     });
 
@@ -154,7 +163,7 @@ describe("Tool.invoke", () => {
       name: "ping",
       description: "Ping pong",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "pong" }),
     });
 
@@ -171,7 +180,7 @@ describe("Tool.invoke", () => {
       name: "fail",
       description: "Always fails",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => {
         throw new ToolError("custom_error", "Something broke", { key: "val" });
       },
@@ -190,7 +199,7 @@ describe("Tool.invoke", () => {
       name: "boom",
       description: "Throws raw error",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => {
         throw new Error("kaboom");
       },
@@ -209,7 +218,7 @@ describe("Tool.invoke", () => {
       name: "boom",
       description: "Throws raw string",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => {
         throw "raw string error";
       },
@@ -228,7 +237,7 @@ describe("Tool.invoke", () => {
       name: "ping",
       description: "Ping",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "pong" }),
     });
 
@@ -244,7 +253,7 @@ describe("Tool.invoke", () => {
       name: "bad",
       description: "Returns null",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => null as unknown as { message: string },
     });
 
@@ -260,7 +269,7 @@ describe("Tool.invoke", () => {
       name: "bad",
       description: "Returns array",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => [] as unknown as { message: string },
     });
 
@@ -276,7 +285,7 @@ describe("Tool.invoke", () => {
       name: "bad",
       description: "Returns string",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => "nope" as unknown as { message: string },
     });
 
@@ -292,7 +301,7 @@ describe("Tool.invoke", () => {
       name: "bad",
       description: "Returns wrong shape",
       input: z.object({}).strict(),
-      output: l1Output({ required_field: z.string() }),
+      output: dataTypeOutput({ required_field: z.string() }),
       handler: () => ({ message: "ok" }) as unknown as { message: string; required_field: string },
     });
 
@@ -309,7 +318,7 @@ describe("Tool.invoke", () => {
       name: "fail",
       description: "Fails without detail",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => {
         throw new ToolError("no_detail_error", "Error without detail");
       },
@@ -328,7 +337,7 @@ describe("Tool.invoke", () => {
       name: "check-input",
       description: "Validates input structure",
       input: z.object({ required: z.string() }).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "ok" }),
     });
 
@@ -351,7 +360,7 @@ describe("Tool.invoke — async handlers", () => {
       name: "async-greet",
       description: "Async greet",
       input: z.object({ name: z.string() }).strict(),
-      output: l1Output({ greeting: z.string() }),
+      output: dataTypeOutput({ greeting: z.string() }),
       handler: async ({ name }) => ({ message: "ok", greeting: `Hi, ${name}!` }),
     });
 
@@ -365,7 +374,7 @@ describe("Tool.invoke — async handlers", () => {
       name: "async-fail",
       description: "Async ToolError",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: async () => {
         throw new ToolError("async_error", "Async failure");
       },
@@ -383,7 +392,7 @@ describe("Tool.invoke — async handlers", () => {
       name: "async-boom",
       description: "Async unexpected error",
       input: z.object({}).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: async () => {
         throw new Error("async kaboom");
       },
@@ -405,7 +414,7 @@ describe("Tool.invoke — schema subcommand depth", () => {
       name: "ping",
       description: "Ping pong",
       input: z.object({ target: z.string() }).strict(),
-      output: l1Output({ pong: z.boolean() }),
+      output: dataTypeOutput({ pong: z.boolean() }),
       handler: ({ target }) => ({ message: `pinged ${target}`, pong: true }),
     });
 
@@ -443,7 +452,7 @@ describe("Tool.invoke — help subcommand depth", () => {
       name: "greet",
       description: "Say hello",
       input: z.object({ name: z.string() }).strict(),
-      output: l1Output({}),
+      output: dataTypeOutput({}),
       handler: () => ({ message: "hello" }),
     });
 
@@ -467,56 +476,56 @@ describe("Tool.invoke — help subcommand depth", () => {
 });
 
 describe("output helpers", () => {
-  it("l1Output includes ok and message", () => {
-    const schema = l1Output({ count: z.number() });
+  it("dataTypeOutput includes ok and message", () => {
+    const schema = dataTypeOutput({ count: z.number() });
     const result = schema.safeParse({ ok: true, message: "ok", count: 42 });
     expect(result.success).toBe(true);
   });
 
-  it("l2Output includes classification", () => {
-    const schema = l2Output(z.enum(["a", "b"]));
+  it("classificationTypeOutput includes classification", () => {
+    const schema = classificationTypeOutput(z.enum(["a", "b"]));
     const result = schema.safeParse({ ok: true, message: "ok", classification: "a" });
     expect(result.success).toBe(true);
   });
 
-  it("l3Output includes instructions", () => {
-    const schema = l3Output();
+  it("procedureTypeOutput includes instructions", () => {
+    const schema = procedureTypeOutput();
     const result = schema.safeParse({ ok: true, message: "ok", instructions: "do this" });
     expect(result.success).toBe(true);
   });
 
-  it("l1Output rejects when ok is missing", () => {
-    const schema = l1Output({ count: z.number() });
+  it("dataTypeOutput rejects when ok is missing", () => {
+    const schema = dataTypeOutput({ count: z.number() });
     const result = schema.safeParse({ message: "ok", count: 42 });
     expect(result.success).toBe(false);
   });
 
-  it("l1Output rejects when message is missing", () => {
-    const schema = l1Output({});
+  it("dataTypeOutput rejects when message is missing", () => {
+    const schema = dataTypeOutput({});
     const result = schema.safeParse({ ok: true });
     expect(result.success).toBe(false);
   });
 
-  it("l2Output rejects when classification is missing", () => {
-    const schema = l2Output(z.enum(["a", "b"]));
+  it("classificationTypeOutput rejects when classification is missing", () => {
+    const schema = classificationTypeOutput(z.enum(["a", "b"]));
     const result = schema.safeParse({ ok: true, message: "ok" });
     expect(result.success).toBe(false);
   });
 
-  it("l2Output accepts with extra fields", () => {
-    const schema = l2Output(z.enum(["a", "b"]), { score: z.number() });
+  it("classificationTypeOutput accepts with extra fields", () => {
+    const schema = classificationTypeOutput(z.enum(["a", "b"]), { score: z.number() });
     const result = schema.safeParse({ ok: true, message: "ok", classification: "a", score: 5 });
     expect(result.success).toBe(true);
   });
 
-  it("l3Output rejects when instructions is missing", () => {
-    const schema = l3Output();
+  it("procedureTypeOutput rejects when instructions is missing", () => {
+    const schema = procedureTypeOutput();
     const result = schema.safeParse({ ok: true, message: "ok" });
     expect(result.success).toBe(false);
   });
 
-  it("l3Output accepts with extra fields", () => {
-    const schema = l3Output({ level: z.string() });
+  it("procedureTypeOutput accepts with extra fields", () => {
+    const schema = procedureTypeOutput({ level: z.string() });
     const result = schema.safeParse({
       ok: true,
       message: "ok",
@@ -524,5 +533,107 @@ describe("output helpers", () => {
       level: "high",
     });
     expect(result.success).toBe(true);
+  });
+});
+
+/**
+ * Behavioral coverage for the deprecated names. These assert the envelope a
+ * consumer still on an old name gets back — not schema-object identity — so
+ * the suite fails if the structure they depend on ever changes.
+ */
+describe("deprecated output helper aliases", () => {
+  const meta: ToolMeta = { name: "legacy-tool", description: "Uses deprecated helpers" };
+
+  it("l1Output produces the data envelope through invoke", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "stats",
+      description: "Raw signals",
+      input: z.object({}).strict(),
+      output: l1Output({ count: z.number() }),
+      handler: () => ({ message: "counted", count: 42 }),
+    });
+
+    const result = await tool.invoke("stats", {});
+    expect(result).toEqual({ ok: true, message: "counted", count: 42 });
+  });
+
+  it("l2Output with only a classification produces the classification envelope", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "size",
+      description: "Classify size",
+      input: z.object({}).strict(),
+      output: l2Output(z.enum(["small", "large"])),
+      handler: () => ({ message: "classified", classification: "large" as const }),
+    });
+
+    const result = await tool.invoke("size", {});
+    expect(result).toEqual({ ok: true, message: "classified", classification: "large" });
+  });
+
+  it("l2Output with extra fields keeps them in the envelope", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "size-scored",
+      description: "Classify size with a score",
+      input: z.object({}).strict(),
+      output: l2Output(z.enum(["small", "large"]), { score: z.number() }),
+      handler: () => ({ message: "classified", classification: "small" as const, score: 3 }),
+    });
+
+    const result = await tool.invoke("size-scored", {});
+    expect(result).toEqual({
+      ok: true,
+      message: "classified",
+      classification: "small",
+      score: 3,
+    });
+  });
+
+  it("l3Output with no arguments produces the instructions envelope", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "instruct",
+      description: "Emit a procedure",
+      input: z.object({}).strict(),
+      output: l3Output(),
+      handler: () => ({ message: "generated", instructions: "## Step 1\nDo the thing." }),
+    });
+
+    const result = await tool.invoke("instruct", {});
+    expect(result).toEqual({
+      ok: true,
+      message: "generated",
+      instructions: "## Step 1\nDo the thing.",
+    });
+  });
+
+  it("l3Output with extra fields keeps them in the envelope", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "instruct-topic",
+      description: "Emit a procedure with a topic",
+      input: z.object({}).strict(),
+      output: l3Output({ topic: z.string() }),
+      handler: () => ({ message: "generated", instructions: "do it", topic: "setup" }),
+    });
+
+    const result = await tool.invoke("instruct-topic", {});
+    expect(result).toEqual({
+      ok: true,
+      message: "generated",
+      instructions: "do it",
+      topic: "setup",
+    });
+  });
+
+  it("l1Output still rejects a handler result that violates the envelope", async () => {
+    const tool = new Tool(meta).subcommand({
+      name: "bad",
+      description: "Returns the wrong shape",
+      input: z.object({}).strict(),
+      output: l1Output({ required_field: z.string() }),
+      handler: () => ({ message: "ok" }) as unknown as { message: string; required_field: string },
+    });
+
+    const result = await tool.invoke("bad", {});
+    expect(result.ok).toBe(false);
+    expect((result as Record<string, unknown>).error).toBe("schema_violation");
   });
 });

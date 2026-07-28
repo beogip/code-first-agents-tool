@@ -72,8 +72,9 @@ export interface SubcommandSpec<I extends z.ZodTypeAny, O extends z.ZodTypeAny> 
   input: I;
   /**
    * Zod schema for the full output envelope (including `ok: z.literal(true)`
-   * and `message: z.string()`). Use the level helpers `l1Output` / `l2Output`
-   * / `l3Output` to get the envelope baked in, or pass a raw `z.object`.
+   * and `message: z.string()`). Use the tool-type helpers `dataTypeOutput` /
+   * `classificationTypeOutput` / `procedureTypeOutput` to get the envelope
+   * baked in, or pass a raw `z.object`.
    * The handler returns everything **except** `ok`; the base class adds it.
    *
    * **Sync only:** same constraint as `input` — no async transforms or refinements.

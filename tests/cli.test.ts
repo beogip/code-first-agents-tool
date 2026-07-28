@@ -142,8 +142,8 @@ describe("CLI — handler returns wrong shape", () => {
   });
 });
 
-describe("CLI — l3Output through full pipeline", () => {
-  it("instruct subcommand returns instructions field via l3Output", () => {
+describe("CLI — procedureTypeOutput through full pipeline", () => {
+  it("instruct subcommand returns instructions field via procedureTypeOutput", () => {
     const { stdout, exitCode } = runTool("instruct");
     expect(exitCode).toBe(0);
     const r = parseOutput(stdout);
