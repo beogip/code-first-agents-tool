@@ -15,18 +15,18 @@
  *
  * ```ts
  * import { z } from "zod";
- * import { Tool, l2Output } from "@code-first-agents/tool";
+ * import { Tool, classificationTypeOutput } from "@code-first-agents/tool";
  *
- * new Tool({ name: "level-classifier", description: "..." })
+ * new Tool({ name: "tool-type-classifier", description: "..." })
  *   .subcommand({
  *     name: "classify",
- *     description: "Classify a SKILL.md by code-first level",
+ *     description: "Classify a SKILL.md by code-first tool type",
  *     input: z.object({ path: z.string() }).strict(),
- *     output: l2Output(z.enum(["L1", "L2", "L3"])),
+ *     output: classificationTypeOutput(z.enum(["Data", "Classification", "Procedure"])),
  *     // Handler returns message + data. `ok: true` is framework-added.
  *     handler: ({ path }) => ({
  *       message: `classified ${path}`,
- *       classification: "L2",
+ *       classification: "Classification",
  *     }),
  *   })
  *   .run(process.argv.slice(2));
@@ -39,12 +39,12 @@
  * schema. This keeps handlers focused on `message` + business data and avoids
  * TypeScript widening `ok: true` to `boolean` in object-literal returns.
  *
- * Use the level helpers (`l1Output`, `l2Output`, `l3Output` from
- * `./output-helpers.ts`) to get the envelope + level-specific required
- * fields baked in; fall back to raw `z.object({...})` when the tool's shape
- * doesn't fit a level (remember to include `ok: z.literal(true)` and
- * `message: z.string()` in the raw schema so validation covers the whole
- * envelope).
+ * Use the tool-type helpers (`dataTypeOutput`, `classificationTypeOutput`,
+ * `procedureTypeOutput` from `./output-helpers.ts`) to get the envelope +
+ * tool-type-specific required fields baked in; fall back to raw
+ * `z.object({...})` when the tool's shape doesn't fit a tool type (remember to
+ * include `ok: z.literal(true)` and `message: z.string()` in the raw schema so
+ * validation covers the whole envelope).
  *
  * Error envelopes (`schema_violation`, `input_validation_error`,
  * `unknown_subcommand`, `unexpected_error`) are class-authored — see
@@ -169,7 +169,7 @@ export class Tool {
     }
     if (spec.output === undefined || spec.output === null) {
       throw new TypeError(
-        `Subcommand "${spec.name}" is missing required 'output' Zod schema (use l1Output({}) for minimal output)`,
+        `Subcommand "${spec.name}" is missing required 'output' Zod schema (use dataTypeOutput({}) for minimal output)`,
       );
     }
   }
@@ -311,7 +311,7 @@ export class Tool {
             code: "custom",
             path: ["ok"],
             message:
-              "Output schema is missing 'ok' field — add ok: z.literal(true) or use l1Output/l2Output/l3Output helpers",
+              "Output schema is missing 'ok' field — add ok: z.literal(true) or use dataTypeOutput/classificationTypeOutput/procedureTypeOutput helpers",
           },
         ]),
       );

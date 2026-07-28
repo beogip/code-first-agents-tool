@@ -1,6 +1,12 @@
 #!/usr/bin/env bun
 import { z } from "zod";
-import { l1Output, l2Output, l3Output, Tool, ToolError } from "../../src/index";
+import {
+  classificationTypeOutput,
+  dataTypeOutput,
+  procedureTypeOutput,
+  Tool,
+  ToolError,
+} from "../../src/index";
 
 const tool = new Tool({
   name: "dummy-tool",
@@ -11,7 +17,7 @@ tool.subcommand({
   name: "greet",
   description: "Greet someone by name",
   input: z.object({ name: z.string() }).strict(),
-  output: l1Output({ greeting: z.string() }),
+  output: dataTypeOutput({ greeting: z.string() }),
   handler: ({ name }) => ({
     message: `greeted ${name}`,
     greeting: `hello ${name}`,
@@ -27,7 +33,7 @@ tool.subcommand({
       b: z.coerce.number(),
     })
     .strict(),
-  output: l1Output({ product: z.number() }),
+  output: dataTypeOutput({ product: z.number() }),
   handler: async ({ a, b }) => {
     await Promise.resolve();
     return { message: "multiplied", product: a * b };
@@ -42,7 +48,7 @@ tool.subcommand({
       level: z.enum(["info", "debug"]).default("info"),
     })
     .strict(),
-  output: l2Output(z.enum(["info", "debug"])),
+  output: classificationTypeOutput(z.enum(["info", "debug"])),
   handler: ({ level }) => ({
     message: `report generated (level=${level})`,
     classification: level,
@@ -53,7 +59,7 @@ tool.subcommand({
   name: "throws",
   description: "Always throws",
   input: z.object({}).strict(),
-  output: l1Output({}),
+  output: dataTypeOutput({}),
   handler: () => {
     throw new Error("dummy-tool: intentional failure");
   },
@@ -68,7 +74,7 @@ tool.subcommand({
       detail: z.string().optional(),
     })
     .strict(),
-  output: l1Output({}),
+  output: dataTypeOutput({}),
   handler: ({ code, detail }) => {
     throw new ToolError(code, `Business failure with code '${code}'`, detail);
   },
@@ -90,9 +96,9 @@ tool.subcommand({
 
 tool.subcommand({
   name: "instruct",
-  description: "Emit a verbatim instruction set via l3Output",
+  description: "Emit a verbatim instruction set via procedureTypeOutput",
   input: z.object({}).strict(),
-  output: l3Output({ topic: z.string() }),
+  output: procedureTypeOutput({ topic: z.string() }),
   handler: () => ({
     message: "instructions generated",
     instructions: "## Step 1\nDo the thing.",
@@ -104,7 +110,7 @@ tool.subcommand({
   name: "sideEffect",
   description: "Writes a marker to stderr when handler runs",
   input: z.object({ required: z.string() }).strict(),
-  output: l1Output({}),
+  output: dataTypeOutput({}),
   handler: () => {
     process.stderr.write("HANDLER_CALLED\n");
     return { message: "side effect executed" };
@@ -115,7 +121,7 @@ tool.subcommand({
   name: "echoArgs",
   description: "Echo positional args (input schema declares the reserved _ key)",
   input: z.object({ _: z.array(z.string()).optional() }).strict(),
-  output: l1Output({ args: z.array(z.string()) }),
+  output: dataTypeOutput({ args: z.array(z.string()) }),
   handler: ({ _ }) => ({
     message: "echoed positional args",
     args: _ ?? [],
