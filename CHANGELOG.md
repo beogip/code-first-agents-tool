@@ -1,3 +1,10 @@
+# [0.2.0](https://github.com/beogip/code-first-agents-tool/compare/v0.1.5...v0.2.0) (2026-07-28)
+
+
+### Features
+
+* align output helpers with Data/Classification/Procedure ([#48](https://github.com/beogip/code-first-agents-tool/issues/48)) ([#49](https://github.com/beogip/code-first-agents-tool/issues/49)) ([0af16f5](https://github.com/beogip/code-first-agents-tool/commit/0af16f5aa58ca5d5ab1d12d44b1c54412a99b79e))
+
 ## [0.1.5](https://github.com/beogip/code-first-agents-tool/compare/v0.1.4...v0.1.5) (2026-06-08)
 
 
