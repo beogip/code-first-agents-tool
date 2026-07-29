@@ -1,3 +1,10 @@
+# [0.3.0](https://github.com/beogip/code-first-agents-tool/compare/v0.2.0...v0.3.0) (2026-07-29)
+
+
+### Features
+
+* add per-type subcommand helpers ([#41](https://github.com/beogip/code-first-agents-tool/issues/41)) ([#51](https://github.com/beogip/code-first-agents-tool/issues/51)) ([72ae2cd](https://github.com/beogip/code-first-agents-tool/commit/72ae2cdeb7623debb4e8f909bd853f1f6b05e016))
+
 # [0.2.0](https://github.com/beogip/code-first-agents-tool/compare/v0.1.5...v0.2.0) (2026-07-28)
 
 
