@@ -184,9 +184,9 @@ contract these implement.
 | Export                       | Kind     | Purpose                                                                                  |
 | ---------------------------- | -------- | ---------------------------------------------------------------------------------------- |
 | `Tool`                       | class    | The orchestrator. Construct with `{ name, description }`, register subcommands, dispatch. |
-| `tool.dataSubcommand(spec)` | method | Register a **data** subcommand — raw signals for the LLM to interpret. `output` is a Zod shape of your own fields; pass `{}` for envelope-only output. |
-| `tool.classificationSubcommand(spec)` | method | Register a **classification** subcommand — a discrete category to branch on. `output` must declare a `classification` key (commonly `z.enum(...)`), plus any extras. |
-| `tool.procedureSubcommand(spec)` | method | Register a **procedure** subcommand — a verbatim procedure for the LLM. `instructions` is composed for you; `output` is optional and carries extras only. |
+| `tool.dataSubcommand(spec)` | method | Register a **data** subcommand — raw signals for the LLM to interpret. `output` is a Zod shape of your own fields; pass `{}` for envelope-only output. Declaring `ok` or `message` is rejected. |
+| `tool.classificationSubcommand(spec)` | method | Register a **classification** subcommand — a discrete category to branch on. `output` must declare a `classification` key (commonly `z.enum(...)`), plus any extras. Declaring `ok` or `message` is rejected. |
+| `tool.procedureSubcommand(spec)` | method | Register a **procedure** subcommand — a verbatim procedure for the LLM. `instructions` is composed for you; `output` is optional and carries extras only. Declaring `ok`, `message` or `instructions` is rejected. |
 | `tool.run(argv)`             | method   | Parse CLI args, dispatch, print the JSON envelope, and `process.exit(0)`.                 |
 | `tool.invoke(name, args)`    | method   | Call a subcommand in-process; returns the envelope object (useful in tests).             |
 | `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message, detail?)`. Optional `detail` (string or object) is included in the error envelope's `detail` field. |
@@ -201,6 +201,45 @@ consumers who need to name them.
 
 Every successful result is the envelope `{ ok: true, message, ... }`; every error is
 `{ ok: false, error, ... }` with exit code `0`.
+
+### Reserved envelope fields
+
+`output` carries your own fields only — the envelope keys are composed for you, and
+redeclaring one is rejected instead of merged.
+
+| Call surface                                        | Reserved keys                       |
+| --------------------------------------------------- | ----------------------------------- |
+| `tool.dataSubcommand` / `dataTypeOutput`             | `ok`, `message`                     |
+| `tool.classificationSubcommand`                     | `ok`, `message`                     |
+| `classificationTypeOutput(enum, extras)`            | `ok`, `message`, `classification`   |
+| `tool.procedureSubcommand` / `procedureTypeOutput`  | `ok`, `message`, `instructions`     |
+
+`classification` is legal in `classificationSubcommand`'s `output` — the enum is yours
+to declare, and the method routes it into place for you. On the standalone
+`classificationTypeOutput` it **is** reserved, because there the enum is already the
+first argument, so a `classification` among the extras would override it.
+
+Without this, your field would win the spread and silently replace the envelope
+contract with a weaker Zod type, so the tool could emit `ok: true` with the field
+missing. Instead it fails loudly, at registration time:
+
+```ts
+tool.procedureSubcommand({
+  name: "review",
+  description: "Emit a review procedure",
+  input: z.object({}).strict(),
+  output: { instructions: z.string().optional() },
+  handler: () => ({ message: "generated", instructions: "## Step 1\nDo it." }),
+});
+// RangeError: output shape redeclares reserved envelope field(s): instructions —
+// the output helper composes these, so declaring them would silently override
+// the envelope contract
+```
+
+TypeScript rejects the same shape before it ever runs, on both the registration
+methods and the standalone output helpers. One gap worth knowing: a shape widened to
+an index signature (`const shape: z.ZodRawShape = { ... }`) has no per-key type left
+for the compile-time check to see, so it compiles — the runtime guard still throws.
 
 ## Development
 

@@ -475,67 +475,6 @@ describe("Tool.invoke — help subcommand depth", () => {
   });
 });
 
-describe("output helpers", () => {
-  it("dataTypeOutput includes ok and message", () => {
-    const schema = dataTypeOutput({ count: z.number() });
-    const result = schema.safeParse({ ok: true, message: "ok", count: 42 });
-    expect(result.success).toBe(true);
-  });
-
-  it("classificationTypeOutput includes classification", () => {
-    const schema = classificationTypeOutput(z.enum(["a", "b"]));
-    const result = schema.safeParse({ ok: true, message: "ok", classification: "a" });
-    expect(result.success).toBe(true);
-  });
-
-  it("procedureTypeOutput includes instructions", () => {
-    const schema = procedureTypeOutput();
-    const result = schema.safeParse({ ok: true, message: "ok", instructions: "do this" });
-    expect(result.success).toBe(true);
-  });
-
-  it("dataTypeOutput rejects when ok is missing", () => {
-    const schema = dataTypeOutput({ count: z.number() });
-    const result = schema.safeParse({ message: "ok", count: 42 });
-    expect(result.success).toBe(false);
-  });
-
-  it("dataTypeOutput rejects when message is missing", () => {
-    const schema = dataTypeOutput({});
-    const result = schema.safeParse({ ok: true });
-    expect(result.success).toBe(false);
-  });
-
-  it("classificationTypeOutput rejects when classification is missing", () => {
-    const schema = classificationTypeOutput(z.enum(["a", "b"]));
-    const result = schema.safeParse({ ok: true, message: "ok" });
-    expect(result.success).toBe(false);
-  });
-
-  it("classificationTypeOutput accepts with extra fields", () => {
-    const schema = classificationTypeOutput(z.enum(["a", "b"]), { score: z.number() });
-    const result = schema.safeParse({ ok: true, message: "ok", classification: "a", score: 5 });
-    expect(result.success).toBe(true);
-  });
-
-  it("procedureTypeOutput rejects when instructions is missing", () => {
-    const schema = procedureTypeOutput();
-    const result = schema.safeParse({ ok: true, message: "ok" });
-    expect(result.success).toBe(false);
-  });
-
-  it("procedureTypeOutput accepts with extra fields", () => {
-    const schema = procedureTypeOutput({ level: z.string() });
-    const result = schema.safeParse({
-      ok: true,
-      message: "ok",
-      instructions: "do it",
-      level: "high",
-    });
-    expect(result.success).toBe(true);
-  });
-});
-
 /**
  * Equivalence coverage for the per-type registration methods. Each asserts that
  * registering through a method produces the *same* output schema as registering
@@ -812,6 +751,75 @@ describe("per-type registration — chainability and registration errors", () =>
           handler: () => ({ message: "second", instructions: "do it" }),
         }),
     ).toThrow(RangeError);
+  });
+
+  /**
+   * Registration-path parity with the standalone helpers: the guard lives inside
+   * the helpers, and all three methods funnel through them. Each
+   * `@ts-expect-error` also asserts the type layer rejects the same shape — if it
+   * regresses, `bunx tsc --noEmit` fails with `Unused '@ts-expect-error' directive`.
+   */
+  it("rejects a data output shape redeclaring a reserved envelope field", () => {
+    const register = () =>
+      new Tool(meta).dataSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        // @ts-expect-error — `message` is composed by the envelope, not declarable
+        output: { message: z.string() },
+        handler: () => ({ message: "nope" }),
+      });
+    expect(register).toThrow(RangeError);
+  });
+
+  it("rejects a classification output shape redeclaring a reserved envelope field", () => {
+    const register = () =>
+      new Tool(meta).classificationSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        // @ts-expect-error — `message` is composed by the envelope, not declarable
+        output: { classification: z.enum(["a", "b"]), message: z.string() },
+        handler: () => ({ message: "nope", classification: "a" as const }),
+      });
+    expect(register).toThrow(RangeError);
+  });
+
+  /**
+   * The other half of the split reserved-key design: `classification` is
+   * reserved on the standalone `classificationTypeOutput` (where the enum is a
+   * separate positional argument) but legal here, because this method routes it
+   * to that argument for the author.
+   *
+   * This test pins the runtime half only. Reserving `classification` at the spec
+   * level would not throw here — the method destructures it out before the guard
+   * runs — it would instead make every legitimate `output: { classification }`
+   * a compile error, so `bunx tsc --noEmit` is what actually catches that
+   * regression (verified: 12 errors across the fixture and this suite).
+   */
+  it("keeps `classification` legal in a classification output shape", () => {
+    const register = () =>
+      new Tool(meta).classificationSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        output: { classification: z.enum(["a", "b"]), score: z.number() },
+        handler: () => ({ message: "ok", classification: "a" as const, score: 1 }),
+      });
+    expect(register).not.toThrow();
+  });
+
+  it("rejects a procedure output shape redeclaring a reserved envelope field", () => {
+    const register = () =>
+      new Tool(meta).procedureSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        // @ts-expect-error — `instructions` is composed by the envelope, not declarable
+        output: { instructions: z.string() },
+        handler: () => ({ message: "nope", instructions: "do it" }),
+      });
+    expect(register).toThrow(RangeError);
   });
 });
 

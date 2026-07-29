@@ -1,13 +1,21 @@
 /**
  * types.ts — Public interfaces for the code-first-agents Tool base class.
  *
- * Kept pure: no imports beyond `zod`, no runtime logic. Consumers of the
- * `Tool` class type their code against these.
+ * Kept pure: no runtime logic, and no imports beyond `zod` plus the type-only
+ * reserved-key vocabulary from `./output-helpers`. Consumers of the `Tool`
+ * class type their code against these.
  *
  * @module code-first-agents-tool/types
  */
 
 import type { z } from "zod";
+import type {
+  CLASSIFICATION_SUBCOMMAND_RESERVED_KEYS,
+  DATA_RESERVED_KEYS,
+  NoReserved,
+  PROCEDURE_RESERVED_KEYS,
+  ReservedKey,
+} from "./output-helpers";
 
 /** Metadata describing the tool itself. Used in help output. */
 export interface ToolMeta {
@@ -147,8 +155,12 @@ export interface DataTypeSubcommandSpec<I extends z.ZodTypeAny, S extends z.ZodR
   description: string;
   /** Zod schema for the validated flags + positional args. See {@link SubcommandSpec.input}. */
   input: I;
-  /** Raw data fields to emit alongside the envelope. Pass `{}` for envelope-only output. */
-  output: S;
+  /**
+   * Raw data fields to emit alongside the envelope. Pass `{}` for
+   * envelope-only output. Declaring `ok` or `message` is a compile error (and a
+   * `RangeError` at registration) — the envelope owns them.
+   */
+  output: S & NoReserved<ReservedKey<typeof DATA_RESERVED_KEYS>>;
   /**
    * Business logic. Returns `message` plus the declared fields — never `ok`,
    * which the base class stamps before output validation.
@@ -176,8 +188,12 @@ export interface ClassificationTypeSubcommandSpec<
   description: string;
   /** Zod schema for the validated flags + positional args. See {@link SubcommandSpec.input}. */
   input: I;
-  /** The required `classification` schema plus any extras (e.g. a score, raw signals). */
-  output: S;
+  /**
+   * The required `classification` schema plus any extras (e.g. a score, raw
+   * signals). Declaring `ok` or `message` is a compile error (and a
+   * `RangeError` at registration) — the envelope owns them.
+   */
+  output: S & NoReserved<ReservedKey<typeof CLASSIFICATION_SUBCOMMAND_RESERVED_KEYS>>;
   /**
    * Business logic. Returns `message`, `classification` and the declared
    * extras — never `ok`, which the base class stamps before output validation.
@@ -204,8 +220,12 @@ export interface ProcedureTypeSubcommandSpec<I extends z.ZodTypeAny, S extends z
   description: string;
   /** Zod schema for the validated flags + positional args. See {@link SubcommandSpec.input}. */
   input: I;
-  /** Extras to emit alongside `instructions`. Omit entirely when there are none. */
-  output?: S;
+  /**
+   * Extras to emit alongside `instructions`. Omit entirely when there are none.
+   * Declaring `ok`, `message` or `instructions` is a compile error (and a
+   * `RangeError` at registration) — the envelope owns them.
+   */
+  output?: S & NoReserved<ReservedKey<typeof PROCEDURE_RESERVED_KEYS>>;
   /**
    * Business logic. Returns `message`, `instructions` and the declared
    * extras — never `ok`, which the base class stamps before output validation.
