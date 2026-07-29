@@ -23,8 +23,15 @@ export {
 } from "./output-helpers";
 export { Tool } from "./tool-class";
 export type {
+  ClassificationShape,
+  ClassificationTypeSchema,
+  ClassificationTypeSubcommandSpec,
+  DataTypeSchema,
+  DataTypeSubcommandSpec,
   HandlerReturn,
   ParsedArgs,
+  ProcedureTypeSchema,
+  ProcedureTypeSubcommandSpec,
   SubcommandSpec,
   ToolMeta,
 } from "./types";

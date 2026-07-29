@@ -153,6 +153,76 @@ describe("CLI — procedureTypeOutput through full pipeline", () => {
   });
 });
 
+describe("CLI — per-type registration methods through full pipeline", () => {
+  it("dataSubcommand emits the envelope plus the declared fields", () => {
+    const { stdout, exitCode } = runTool("typedGreet", "--name", "world");
+    expect(exitCode).toBe(0);
+    expect(parseOutput(stdout)).toEqual({
+      ok: true,
+      message: "greeted world",
+      greeting: "hello world",
+    });
+  });
+
+  it("classificationSubcommand emits classification alongside extras", () => {
+    const { stdout, exitCode } = runTool("typedReport", "--level", "debug");
+    expect(exitCode).toBe(0);
+    expect(parseOutput(stdout)).toEqual({
+      ok: true,
+      message: "report generated (level=debug)",
+      classification: "debug",
+      verbose: true,
+    });
+  });
+
+  it("classificationSubcommand still applies input schema defaults", () => {
+    const { stdout, exitCode } = runTool("typedReport");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.classification).toBe("info");
+    expect(r.verbose).toBe(false);
+  });
+
+  it("procedureSubcommand emits instructions plus extras", () => {
+    const { stdout, exitCode } = runTool("typedInstruct");
+    expect(exitCode).toBe(0);
+    expect(parseOutput(stdout)).toEqual({
+      ok: true,
+      message: "instructions generated",
+      instructions: "## Step 1\nDo the thing.",
+      topic: "setup",
+    });
+  });
+
+  it("procedureSubcommand composes instructions even when output is omitted", () => {
+    const { stdout, exitCode } = runTool("bareInstruct");
+    expect(exitCode).toBe(0);
+    expect(parseOutput(stdout)).toEqual({
+      ok: true,
+      message: "bare instructions generated",
+      instructions: "## Step 1\nJust this.",
+    });
+  });
+
+  it("a per-type handler violating the composed schema emits schema_violation", () => {
+    const { stdout, exitCode } = runTool("badTypedShape");
+    expect(exitCode).toBe(0);
+    const r = parseOutput(stdout);
+    expect(r.ok).toBe(false);
+    expect(r.error).toBe("schema_violation");
+    expect(r.detail as string).toMatch(/count/);
+  });
+
+  it("per-type subcommands appear in help output like any other", () => {
+    const { stdout } = runTool("help");
+    const names = (parseOutput(stdout).subcommands as { name: string }[]).map((s) => s.name);
+    expect(names).toContain("typedGreet");
+    expect(names).toContain("typedReport");
+    expect(names).toContain("typedInstruct");
+    expect(names).toContain("bareInstruct");
+  });
+});
+
 describe("CLI — --subcommand normalization", () => {
   it("--help produces identical output to help", () => {
     const bare = parseOutput(runTool("help").stdout);
@@ -261,6 +331,14 @@ describe("CLI — exit code is always 0", () => {
     ["businessError", ["--code", "x"]],
     ["businessError", ["--code", "x", "--detail", "d"]],
     ["instruct", []],
+    ["typedGreet", ["--name", "x"]],
+    ["typedGreet", []],
+    ["typedReport", []],
+    ["typedReport", ["--level", "debug"]],
+    ["typedReport", ["--bogus", "x"]],
+    ["typedInstruct", []],
+    ["bareInstruct", []],
+    ["badTypedShape", []],
     ["sideEffect", ["--required", "x"]],
     ["sideEffect", []],
     ["badShape", []],

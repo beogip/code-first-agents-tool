@@ -29,21 +29,21 @@ A `Tool` registers subcommands — each with a Zod input schema, an output schem
 ```ts
 #!/usr/bin/env bun
 import { z } from "zod";
-import { Tool, dataTypeOutput } from "@code-first-agents/tool";
+import { Tool } from "@code-first-agents/tool";
 
 const tool = new Tool({
   name: "math",
   description: "Basic math operations",
 });
 
-tool.subcommand({
+tool.dataSubcommand({
   name: "multiply",
   description: "Multiply two numbers",
   input: z.object({
     a: z.coerce.number(),
     b: z.coerce.number(),
   }).strict(),
-  output: dataTypeOutput({ product: z.number() }),
+  output: { product: z.number() },
   handler: ({ a, b }) => ({
     message: "multiplied",
     product: a * b,
@@ -62,18 +62,16 @@ bun run math.ts multiply --a 6 --b 7
 
 ### Output types
 
-The spec defines three tool types. Use the corresponding helper to build the output schema:
+Every tool output is one of the three tool types the spec defines, so there is one registration method per type. In each of them, `output` declares **only the fields your tool returns** — the `{ ok, message }` envelope is composed for you, and TypeScript infers the handler's return type from it.
 
 **Data** (raw facts for the LLM to interpret):
 
 ```ts
-import { dataTypeOutput } from "@code-first-agents/tool";
-
-tool.subcommand({
+tool.dataSubcommand({
   name: "greet",
   description: "Greet someone by name",
   input: z.object({ name: z.string() }).strict(),
-  output: dataTypeOutput({ greeting: z.string() }),
+  output: { greeting: z.string() },
   handler: ({ name }) => ({
     message: `greeted ${name}`,
     greeting: `hello ${name}`,
@@ -84,15 +82,13 @@ tool.subcommand({
 **Classification** (a discrete category the skill can branch on):
 
 ```ts
-import { classificationTypeOutput } from "@code-first-agents/tool";
-
-tool.subcommand({
+tool.classificationSubcommand({
   name: "report",
   description: "Emit a report classified by log level",
   input: z.object({
     level: z.enum(["info", "debug"]).default("info"),
   }).strict(),
-  output: classificationTypeOutput(z.enum(["info", "debug"])),
+  output: { classification: z.enum(["info", "debug"]) },
   handler: ({ level }) => ({
     message: `report generated (level=${level})`,
     classification: level,
@@ -100,16 +96,16 @@ tool.subcommand({
 });
 ```
 
+`output` **must** declare a `classification` key — the enum is yours to choose, so omitting it is a compile error. Extra fields sit alongside it.
+
 **Procedure** (a verbatim procedure for the LLM to execute):
 
 ```ts
-import { procedureTypeOutput } from "@code-first-agents/tool";
-
-tool.subcommand({
+tool.procedureSubcommand({
   name: "instruct",
   description: "Emit a verbatim instruction set",
   input: z.object({}).strict(),
-  output: procedureTypeOutput({ topic: z.string() }),
+  output: { topic: z.string() },
   handler: () => ({
     message: "instructions generated",
     instructions: "## Step 1\nDo the thing.",
@@ -118,10 +114,13 @@ tool.subcommand({
 });
 ```
 
+`instructions` is always a required string, so it is composed for you rather than declared — pass `output` only for extras, and omit it entirely when there are none.
+
 ### Handler contract
 
 - Handlers return the output shape **without `ok`** — the framework stamps `ok: true` automatically.
 - Handlers always return a `message: string` describing what happened.
+- The fields fixed by the tool type (`ok`, `message`, `instructions`) are never declared in `output`; the ones you choose (`classification`, your own data) always are.
 - Input schemas should use `.strict()` to reject unknown flags.
 - Handlers can be sync or async.
 
@@ -132,11 +131,11 @@ All errors exit with code 0 and return `{ ok: false, error: "...", ... }`. Throw
 ```ts
 import { ToolError } from "@code-first-agents/tool";
 
-tool.subcommand({
+tool.dataSubcommand({
   name: "validate",
   description: "Validate a config file",
   input: z.object({ path: z.string() }).strict(),
-  output: dataTypeOutput({}),
+  output: {},
   handler: ({ path }) => {
     throw new ToolError("validation_failed", `Config at '${path}' is invalid`);
   },
@@ -185,16 +184,20 @@ contract these implement.
 | Export                       | Kind     | Purpose                                                                                  |
 | ---------------------------- | -------- | ---------------------------------------------------------------------------------------- |
 | `Tool`                       | class    | The orchestrator. Construct with `{ name, description }`, register subcommands, dispatch. |
-| `tool.subcommand(config)`    | method   | Register a subcommand with Zod `input`/`output` schemas and a `handler`.                  |
+| `tool.dataSubcommand(spec)` | method | Register a **data** subcommand — raw signals for the LLM to interpret. `output` is a Zod shape of your own fields; pass `{}` for envelope-only output. |
+| `tool.classificationSubcommand(spec)` | method | Register a **classification** subcommand — a discrete category to branch on. `output` must declare a `classification` key (commonly `z.enum(...)`), plus any extras. |
+| `tool.procedureSubcommand(spec)` | method | Register a **procedure** subcommand — a verbatim procedure for the LLM. `instructions` is composed for you; `output` is optional and carries extras only. |
 | `tool.run(argv)`             | method   | Parse CLI args, dispatch, print the JSON envelope, and `process.exit(0)`.                 |
 | `tool.invoke(name, args)`    | method   | Call a subcommand in-process; returns the envelope object (useful in tests).             |
-| `dataTypeOutput(shape)`            | function | Build a **data** output schema — raw signals for the LLM to interpret.              |
-| `classificationTypeOutput(classification, fields?)` | function | Build a **classification** output schema — a discrete category to branch on. `classification` is any Zod type (commonly `z.enum(...)`). |
-| `procedureTypeOutput(fields?)`          | function | Build a **procedure** output schema — a verbatim procedure for the LLM. Fields are optional.     |
-| `l1Output` / `l2Output` / `l3Output` | function | **Deprecated** aliases of `dataTypeOutput` / `classificationTypeOutput` / `procedureTypeOutput`. Kept until the next breaking change, then removed. |
 | `ToolError`                  | class    | Throw inside a handler for domain-specific errors: `new ToolError(code, message, detail?)`. Optional `detail` (string or object) is included in the error envelope's `detail` field. |
 | `schema` (builtin)           | command  | Auto-registered. Emits JSON Schema for every subcommand. Not user-overridable.           |
 | `help` (builtin)             | command  | Auto-registered. Emits a human-readable subcommand listing. Not user-overridable.        |
+
+Each registration method takes a spec of `{ name, description, input, output, handler }`.
+The matching spec types (`DataTypeSubcommandSpec`, `ClassificationTypeSubcommandSpec`,
+`ProcedureTypeSubcommandSpec`) and composed-schema types (`DataTypeSchema`,
+`ClassificationTypeSchema`, `ProcedureTypeSchema`, `ClassificationShape`) are exported for
+consumers who need to name them.
 
 Every successful result is the envelope `{ ok: true, message, ... }`; every error is
 `{ ok: false, error, ... }` with exit code `0`.

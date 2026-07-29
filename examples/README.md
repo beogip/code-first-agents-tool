@@ -13,7 +13,7 @@ bun install
 The examples import from `../src/index.ts`, so they run against the source with **no build step**. In your own project you'd install the package and import from `@code-first-agents/tool` instead:
 
 ```ts
-import { Tool, dataTypeOutput, classificationTypeOutput, procedureTypeOutput } from "@code-first-agents/tool";
+import { Tool } from "@code-first-agents/tool";
 ```
 
 ## `changeset.ts` — one tool, all three tool types
