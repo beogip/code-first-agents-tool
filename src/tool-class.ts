@@ -15,14 +15,15 @@
  *
  * ```ts
  * import { z } from "zod";
- * import { Tool, classificationTypeOutput } from "@code-first-agents/tool";
+ * import { Tool } from "@code-first-agents/tool";
  *
  * new Tool({ name: "tool-type-classifier", description: "..." })
- *   .subcommand({
+ *   .classificationSubcommand({
  *     name: "classify",
  *     description: "Classify a SKILL.md by code-first tool type",
  *     input: z.object({ path: z.string() }).strict(),
- *     output: classificationTypeOutput(z.enum(["Data", "Classification", "Procedure"])),
+ *     // `output` declares only our fields; the envelope is composed for us.
+ *     output: { classification: z.enum(["Data", "Classification", "Procedure"]) },
  *     // Handler returns message + data. `ok: true` is framework-added.
  *     handler: ({ path }) => ({
  *       message: `classified ${path}`,
@@ -39,12 +40,12 @@
  * schema. This keeps handlers focused on `message` + business data and avoids
  * TypeScript widening `ok: true` to `boolean` in object-literal returns.
  *
- * Use the tool-type helpers (`dataTypeOutput`, `classificationTypeOutput`,
- * `procedureTypeOutput` from `./output-helpers.ts`) to get the envelope +
- * tool-type-specific required fields baked in; fall back to raw
- * `z.object({...})` when the tool's shape doesn't fit a tool type (remember to
- * include `ok: z.literal(true)` and `message: z.string()` in the raw schema so
- * validation covers the whole envelope).
+ * Every output is one of the three spec tool types, so register through the
+ * method for the type: {@link Tool.dataSubcommand},
+ * {@link Tool.classificationSubcommand} or
+ * {@link Tool.procedureSubcommand}. Each composes the envelope plus its
+ * type's required fields from the shape you declare, via the helpers in
+ * `./output-helpers.ts`.
  *
  * Error envelopes (`schema_violation`, `input_validation_error`,
  * `unknown_subcommand`, `unexpected_error`) are class-authored — see
@@ -65,7 +66,19 @@ import {
   unknownSubcommandEnvelope,
 } from "./envelopes";
 import { buildHelpPayload, buildSchemaOutput } from "./introspection";
-import type { ParsedArgs, SubcommandSpec, ToolMeta } from "./types";
+import { classificationTypeOutput, dataTypeOutput, procedureTypeOutput } from "./output-helpers";
+import type {
+  ClassificationShape,
+  ClassificationTypeSchema,
+  ClassificationTypeSubcommandSpec,
+  DataTypeSchema,
+  DataTypeSubcommandSpec,
+  ParsedArgs,
+  ProcedureTypeSchema,
+  ProcedureTypeSubcommandSpec,
+  SubcommandSpec,
+  ToolMeta,
+} from "./types";
 import { jsonOutput, type ToolOutput } from "./utils";
 
 /** Internal alias for the type-erased spec stored in the registry. */
@@ -98,13 +111,21 @@ export class Tool {
   }
 
   /**
-   * Register a subcommand. Chainable (returns `this`).
+   * Register a subcommand with a pre-composed output schema. Chainable
+   * (returns `this`).
    *
    * Throws synchronously on:
    * - reserved name collision (`schema`, `help`) → `RangeError`
    * - duplicate name → `RangeError`
    * - missing `input` schema → `TypeError`
    * - missing `output` schema → `TypeError`
+   *
+   * @deprecated Use {@link Tool.dataSubcommand},
+   * {@link Tool.classificationSubcommand} or
+   * {@link Tool.procedureSubcommand} — every tool output must be one of the
+   * three spec tool types, and those methods compose the envelope for you. This
+   * method stops being exported at the next breaking change, when it is removed
+   * rather than adapted.
    *
    * @param spec - {@link SubcommandSpec} carrying name, description, input/output Zod schemas, and handler.
    * @returns This tool instance, for chaining.
@@ -113,6 +134,106 @@ export class Tool {
     this.validateRegistration(spec);
     this.subs.set(spec.name, spec as unknown as AnySpec);
     return this;
+  }
+
+  /**
+   * Register a **Data** subcommand — raw signals for the LLM to interpret.
+   * Chainable (returns `this`).
+   *
+   * `output` is a raw Zod shape carrying only the fields this subcommand
+   * returns; the `ok`/`message` envelope is composed via
+   * {@link dataTypeOutput}. Pass `{}` for an envelope-only output.
+   *
+   * Registration errors (reserved name, duplicate name, missing schema) behave
+   * exactly as on {@link Tool.subcommand}, which this delegates to.
+   *
+   * @example
+   * tool.dataSubcommand({
+   *   name: "stats",
+   *   description: "Emit raw changeset signals",
+   *   input: z.object({ files: z.coerce.number() }).strict(),
+   *   output: { files: z.number() },
+   *   handler: ({ files }) => ({ message: "counted", files }),
+   * });
+   *
+   * @param spec - {@link DataTypeSubcommandSpec} carrying name, description, input schema, output shape, and handler.
+   * @returns This tool instance, for chaining.
+   */
+  dataSubcommand<I extends z.ZodTypeAny, S extends z.ZodRawShape>(
+    spec: DataTypeSubcommandSpec<I, S>,
+  ): this {
+    return this.subcommand<I, DataTypeSchema<S>>({
+      ...spec,
+      output: dataTypeOutput(spec.output),
+    });
+  }
+
+  /**
+   * Register a **Classification** subcommand — a discrete category the calling
+   * skill can branch on. Chainable (returns `this`).
+   *
+   * `output` must declare a `classification` key (the enum is yours to choose)
+   * and may carry extras alongside it. The envelope is composed via
+   * {@link classificationTypeOutput}; omitting `classification` is a compile
+   * error.
+   *
+   * @example
+   * tool.classificationSubcommand({
+   *   name: "size",
+   *   description: "Classify the changeset size",
+   *   input: z.object({ files: z.coerce.number() }).strict(),
+   *   output: { classification: z.enum(["small", "large"]), total: z.number() },
+   *   handler: ({ files }) => ({
+   *     message: "classified",
+   *     classification: files > 10 ? "large" : "small",
+   *     total: files,
+   *   }),
+   * });
+   *
+   * @param spec - {@link ClassificationTypeSubcommandSpec} carrying name, description, input schema, output shape, and handler.
+   * @returns This tool instance, for chaining.
+   */
+  classificationSubcommand<I extends z.ZodTypeAny, S extends ClassificationShape>(
+    spec: ClassificationTypeSubcommandSpec<I, S>,
+  ): this {
+    // Splitting `classification` out normalizes key order to
+    // `ok, message, classification, ...extras` — byte-identical to what the
+    // standalone helper emits, whatever order the author wrote the shape in.
+    const { classification, ...fields } = spec.output;
+    return this.subcommand<I, ClassificationTypeSchema<S>>({
+      ...spec,
+      output: classificationTypeOutput(classification, fields) as ClassificationTypeSchema<S>,
+    });
+  }
+
+  /**
+   * Register a **Procedure** subcommand — a complete procedure the LLM executes
+   * verbatim. Chainable (returns `this`).
+   *
+   * The required `instructions` string is composed via
+   * {@link procedureTypeOutput}, so it is never declared in `output`. Pass
+   * `output` only for extras; omit it entirely when there are none.
+   *
+   * @example
+   * tool.procedureSubcommand({
+   *   name: "review-plan",
+   *   description: "Emit a verbatim review procedure",
+   *   input: z.object({}).strict(),
+   *   handler: () => ({ message: "generated", instructions: "## Step 1\nDo it." }),
+   * });
+   *
+   * @param spec - {@link ProcedureTypeSubcommandSpec} carrying name, description, input schema, optional output shape, and handler.
+   * @returns This tool instance, for chaining.
+   */
+  procedureSubcommand<I extends z.ZodTypeAny, S extends z.ZodRawShape = Record<never, never>>(
+    spec: ProcedureTypeSubcommandSpec<I, S>,
+  ): this {
+    // The ternary picks the right overload instead of forwarding a possibly
+    // `undefined` argument, which `exactOptionalPropertyTypes` would reject.
+    const output = (
+      spec.output ? procedureTypeOutput(spec.output) : procedureTypeOutput()
+    ) as ProcedureTypeSchema<S>;
+    return this.subcommand<I, ProcedureTypeSchema<S>>({ ...spec, output });
   }
 
   /**
@@ -169,7 +290,7 @@ export class Tool {
     }
     if (spec.output === undefined || spec.output === null) {
       throw new TypeError(
-        `Subcommand "${spec.name}" is missing required 'output' Zod schema (use dataTypeOutput({}) for minimal output)`,
+        `Subcommand "${spec.name}" is missing required 'output' Zod schema (register via dataSubcommand with output: {} for minimal output)`,
       );
     }
   }
@@ -311,7 +432,7 @@ export class Tool {
             code: "custom",
             path: ["ok"],
             message:
-              "Output schema is missing 'ok' field — add ok: z.literal(true) or use dataTypeOutput/classificationTypeOutput/procedureTypeOutput helpers",
+              "Output schema is missing 'ok' field — register via dataSubcommand/classificationSubcommand/procedureSubcommand, which compose the envelope for you",
           },
         ]),
       );

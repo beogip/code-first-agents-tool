@@ -24,21 +24,11 @@
  * source in this repo with no build step. In your own project you would
  * install the package and import from "@code-first-agents/tool" instead:
  *
- *   import {
- *     Tool,
- *     dataTypeOutput,
- *     classificationTypeOutput,
- *     procedureTypeOutput,
- *   } from "@code-first-agents/tool";
+ *   import { Tool } from "@code-first-agents/tool";
  */
 
 import { z } from "zod";
-import {
-  classificationTypeOutput,
-  dataTypeOutput,
-  procedureTypeOutput,
-  Tool,
-} from "../src/index.ts";
+import { Tool } from "../src/index.ts";
 
 /** Shared input: the raw shape of a changeset, supplied as CLI flags. */
 const changesetInput = z
@@ -84,16 +74,17 @@ const tool = new Tool({
 });
 
 // Data: raw signals, no interpretation. The LLM decides what they mean.
-tool.subcommand({
+// `output` lists only our fields — `ok` and `message` are composed for us.
+tool.dataSubcommand({
   name: "stats",
   description: "Emit raw changeset signals (data)",
   input: changesetInput,
-  output: dataTypeOutput({
+  output: {
     files: z.number(),
     additions: z.number(),
     deletions: z.number(),
     total_lines: z.number(),
-  }),
+  },
   handler: ({ files, additions, deletions }) => ({
     message: "changeset stats computed",
     files,
@@ -104,11 +95,12 @@ tool.subcommand({
 });
 
 // Classification: a discrete category the calling skill can branch on.
-tool.subcommand({
+// `classification` is declared here because the enum is ours to choose.
+tool.classificationSubcommand({
   name: "size",
   description: "Classify the changeset size (classification)",
   input: changesetInput,
-  output: classificationTypeOutput(SizeClass, { total_lines: z.number() }),
+  output: { classification: SizeClass, total_lines: z.number() },
   handler: ({ files, additions, deletions }) => {
     const classification = classifySize(files, additions, deletions);
     return {
@@ -120,11 +112,13 @@ tool.subcommand({
 });
 
 // Procedure: a complete procedure for the LLM to execute verbatim.
-tool.subcommand({
+// `instructions` is always required, so it is composed rather than declared —
+// `output` carries only the extra `size` field.
+tool.procedureSubcommand({
   name: "review-plan",
   description: "Emit a verbatim review procedure for the changeset (procedure)",
   input: changesetInput,
-  output: procedureTypeOutput({ size: SizeClass }),
+  output: { size: SizeClass },
   handler: ({ files, additions, deletions }) => {
     const size = classifySize(files, additions, deletions);
     return {

@@ -537,6 +537,285 @@ describe("output helpers", () => {
 });
 
 /**
+ * Equivalence coverage for the per-type registration methods. Each asserts that
+ * registering through a method produces the *same* output schema as registering
+ * through `subcommand` with the matching standalone helper — read through the
+ * public `schema` builtin, so the private `subs` Map is never touched.
+ *
+ * Compared as serialized JSON rather than with `toEqual`, so key order is part
+ * of the assertion: the classification path normalizes it deliberately.
+ */
+describe("per-type registration — schema equivalence", () => {
+  const meta: ToolMeta = { name: "test-tool", description: "A test tool" };
+
+  async function outputSchema(tool: Tool, name: string): Promise<string> {
+    const result = await tool.invoke("schema");
+    const schemas = (result as Record<string, unknown>).schemas as Record<
+      string,
+      SchemaOutputEntry
+    >;
+    const entry = schemas[name] as { output: Record<string, unknown> };
+    return JSON.stringify(entry.output);
+  }
+
+  it("dataSubcommand matches dataTypeOutput(shape)", async () => {
+    const viaMethod = new Tool(meta).dataSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: { count: z.number(), label: z.string() },
+      handler: () => ({ message: "ok", count: 1, label: "a" }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: dataTypeOutput({ count: z.number(), label: z.string() }),
+      handler: () => ({ message: "ok", count: 1, label: "a" }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("dataSubcommand accepts an empty output shape", async () => {
+    const viaMethod = new Tool(meta).dataSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: {},
+      handler: () => ({ message: "ok" }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: dataTypeOutput({}),
+      handler: () => ({ message: "ok" }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+    expect(await viaMethod.invoke("x", {})).toEqual({ ok: true, message: "ok" });
+  });
+
+  it("classificationSubcommand matches classificationTypeOutput(enum, extras)", async () => {
+    const Size = z.enum(["small", "large"]);
+    const viaMethod = new Tool(meta).classificationSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: { classification: Size, score: z.number() },
+      handler: () => ({ message: "ok", classification: "small" as const, score: 1 }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: classificationTypeOutput(Size, { score: z.number() }),
+      handler: () => ({ message: "ok", classification: "small" as const, score: 1 }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("classificationSubcommand normalizes key order when extras precede classification", async () => {
+    const Size = z.enum(["small", "large"]);
+    const extrasFirst = new Tool(meta).classificationSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      // Author wrote `score` before `classification` — the method still emits
+      // `ok, message, classification, ...extras`.
+      output: { score: z.number(), classification: Size },
+      handler: () => ({ message: "ok", classification: "large" as const, score: 2 }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: classificationTypeOutput(Size, { score: z.number() }),
+      handler: () => ({ message: "ok", classification: "large" as const, score: 2 }),
+    });
+
+    expect(await outputSchema(extrasFirst, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("classificationSubcommand matches the no-extras helper overload", async () => {
+    const Size = z.enum(["small", "large"]);
+    const viaMethod = new Tool(meta).classificationSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: { classification: Size },
+      handler: () => ({ message: "ok", classification: "small" as const }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: classificationTypeOutput(Size),
+      handler: () => ({ message: "ok", classification: "small" as const }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("procedureSubcommand matches procedureTypeOutput(extras)", async () => {
+    const viaMethod = new Tool(meta).procedureSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: { topic: z.string() },
+      handler: () => ({ message: "ok", instructions: "do it", topic: "setup" }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: procedureTypeOutput({ topic: z.string() }),
+      handler: () => ({ message: "ok", instructions: "do it", topic: "setup" }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("procedureSubcommand with output omitted matches procedureTypeOutput()", async () => {
+    const viaMethod = new Tool(meta).procedureSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      handler: () => ({ message: "ok", instructions: "do it" }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: procedureTypeOutput(),
+      handler: () => ({ message: "ok", instructions: "do it" }),
+    });
+
+    expect(await outputSchema(viaMethod, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+
+  it("procedureSubcommand with an empty output shape matches the no-arg overload", async () => {
+    const emptyShape = new Tool(meta).procedureSubcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: {},
+      handler: () => ({ message: "ok", instructions: "do it" }),
+    });
+    const viaHelper = new Tool(meta).subcommand({
+      name: "x",
+      description: "d",
+      input: z.object({}).strict(),
+      output: procedureTypeOutput(),
+      handler: () => ({ message: "ok", instructions: "do it" }),
+    });
+
+    expect(await outputSchema(emptyShape, "x")).toBe(await outputSchema(viaHelper, "x"));
+  });
+});
+
+describe("per-type registration — chainability and registration errors", () => {
+  const meta: ToolMeta = { name: "test-tool", description: "A test tool" };
+
+  it("dataSubcommand returns the same instance", () => {
+    const tool = new Tool(meta);
+    expect(
+      tool.dataSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        output: {},
+        handler: () => ({ message: "ok" }),
+      }),
+    ).toBe(tool);
+  });
+
+  it("classificationSubcommand returns the same instance", () => {
+    const tool = new Tool(meta);
+    expect(
+      tool.classificationSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        output: { classification: z.enum(["a", "b"]) },
+        handler: () => ({ message: "ok", classification: "a" as const }),
+      }),
+    ).toBe(tool);
+  });
+
+  it("procedureSubcommand returns the same instance", () => {
+    const tool = new Tool(meta);
+    expect(
+      tool.procedureSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        handler: () => ({ message: "ok", instructions: "do it" }),
+      }),
+    ).toBe(tool);
+  });
+
+  it("the three methods chain together on one instance", () => {
+    const tool = new Tool(meta)
+      .dataSubcommand({
+        name: "a",
+        description: "d",
+        input: z.object({}).strict(),
+        output: { n: z.number() },
+        handler: () => ({ message: "ok", n: 1 }),
+      })
+      .classificationSubcommand({
+        name: "b",
+        description: "d",
+        input: z.object({}).strict(),
+        output: { classification: z.enum(["x", "y"]) },
+        handler: () => ({ message: "ok", classification: "x" as const }),
+      })
+      .procedureSubcommand({
+        name: "c",
+        description: "d",
+        input: z.object({}).strict(),
+        handler: () => ({ message: "ok", instructions: "do it" }),
+      });
+
+    expect(tool).toBeInstanceOf(Tool);
+  });
+
+  it("rejects a reserved name passed to a per-type method", () => {
+    expect(() =>
+      new Tool(meta).dataSubcommand({
+        name: "schema",
+        description: "d",
+        input: z.object({}).strict(),
+        output: {},
+        handler: () => ({ message: "nope" }),
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it("rejects a name already registered through subcommand", () => {
+    expect(() =>
+      new Tool(meta)
+        .subcommand({
+          name: "dup",
+          description: "first",
+          input: z.object({}).strict(),
+          output: dataTypeOutput({}),
+          handler: () => ({ message: "first" }),
+        })
+        .procedureSubcommand({
+          name: "dup",
+          description: "second",
+          input: z.object({}).strict(),
+          handler: () => ({ message: "second", instructions: "do it" }),
+        }),
+    ).toThrow(RangeError);
+  });
+});
+
+/**
  * Behavioral coverage for the deprecated names. These assert the envelope a
  * consumer still on an old name gets back — not schema-object identity — so
  * the suite fails if the structure they depend on ever changes.
