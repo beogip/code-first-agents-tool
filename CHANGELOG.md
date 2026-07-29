@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/beogip/code-first-agents-tool/compare/v0.3.0...v0.3.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* reject output shapes that redeclare reserved envelope fields ([#50](https://github.com/beogip/code-first-agents-tool/issues/50)) ([#52](https://github.com/beogip/code-first-agents-tool/issues/52)) ([262cbf6](https://github.com/beogip/code-first-agents-tool/commit/262cbf6df5bb4c4e10d52af5a64f203a6bfdbd20))
+
 # [0.3.0](https://github.com/beogip/code-first-agents-tool/compare/v0.2.0...v0.3.0) (2026-07-29)
 
 
